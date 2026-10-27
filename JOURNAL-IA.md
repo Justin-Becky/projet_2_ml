@@ -1,4 +1,4 @@
-### request 1
+### Request 1
 name: Tests
 on: [push]
 
@@ -13,3 +13,7 @@ with:
 - run: pip install -r requirements.txt
 - run: python -m pytest -v
 peux tu m'expliquer ligne par ligne se que se code fait
+
+### Request 2
+Peux-tu faire la structure du README.md pour un projet "x" respectant ces consignes :
+le fichier du projet (Projet INF1007 — De la donnée à l'application)
