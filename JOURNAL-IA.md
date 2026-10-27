@@ -1,0 +1,15 @@
+### request 1
+name: Tests
+on: [push]
+
+jobs:
+test:
+runs-on: ubuntu-latest
+steps:
+- uses: actions/checkout@v7
+- uses: actions/setup-python@v7
+with:
+    python-version: "3.14"
+- run: pip install -r requirements.txt
+- run: python -m pytest -v
+peux tu m'expliquer ligne par ligne se que se code fait
