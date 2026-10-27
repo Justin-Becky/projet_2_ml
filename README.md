@@ -15,9 +15,28 @@
 | Source                  | https://www.kaggle.com/datasets/jackmangione/clash-royale-matchups-june2026/data |
 | Licence                 | CC BY-NC-SA 4.0                                                                  |
 | Taille                  | 737 280 lignes, 36 colonnes                                                      |
-| Variable cible          | gagne (oui ou non)                                                               |
-| Variables numériques    | `superficie`, `annee_construction`, `nb_chambres`, ...                           |
-| Variables catégorielles | `quartier`, `type_logement`, ...                                                 |
+
+### Variables catégorielles
+
+| Colonne                           | Description                                 |
+|-----------------------------------|---------------------------------------------|
+| `game_mode`                       | Mode de jeu (ex. `Ladder`)                  |
+| `winner_card_0` à `winner_card_7` | Identifiant des 8 cartes du deck du gagnant |
+| `loser_card_0` à `loser_card_7`   | Identifiant des 8 cartes du deck du perdant |
+
+### Variables numériques
+
+| Colonne                                       | Description                               |
+|-----------------------------------------------|-------------------------------------------|
+| `winner_card_0_level` à `winner_card_7_level` | Niveau de chacune des 8 cartes du gagnant |
+| `loser_card_0_level` à `loser_card_7_level`   | Niveau de chacune des 8 cartes du perdant |
+
+### Colonnes retirées
+
+| Colonne                 | Raison                                                |
+|-------------------------|-------------------------------------------------------|
+| `winner_id`, `loser_id` | Identifiants de joueurs (données personnelles)        |
+| `time`                  | Horodatage de la partie, non utile pour la prédiction |
 
 Les fichiers sont trop lourd, c'est pourquoi ils ne sont pas dans github. Pour les télécharger, il suffit d'aller 
 sur https://www.kaggle.com/datasets/jackmangione/clash-royale-matchups-june2026/data et de télécharger les six premiers
