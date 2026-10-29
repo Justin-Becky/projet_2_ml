@@ -1,1 +1,2 @@
 *.parquet
+/src/variables_secretes.py
