@@ -17,3 +17,9 @@ peux tu m'expliquer ligne par ligne se que se code fait
 ### Request 2
 Peux-tu faire la structure du README.md pour un projet "x" respectant ces consignes :
 le fichier du projet (Projet INF1007 — De la donnée à l'application)
+
+### Request 3
+Explain the process to getting information from clash royal api
+
+### Request 4
+can you help me create a variable that i will not push on pycharm
