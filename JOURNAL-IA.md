@@ -23,3 +23,6 @@ Explain the process to getting information from clash royal api
 
 ### Request 4
 can you help me create a variable that i will not push on pycharm
+
+### Request 5
+I am developing a clash royal win predictor. I use an api key thats allowed for ceratin IP addresses but mine keeps changing. My friend also wants to use it so we need a way to be on the same IP
