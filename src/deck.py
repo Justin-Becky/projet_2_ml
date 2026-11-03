@@ -114,9 +114,6 @@ class Carte(QLabel):
 
 
 class CaseDeck(Carte):
-
-    retirer = Signal(int)
-
     def __init__(self, nom, index, setup: bool = False):
         super().__init__(None, None)
         self.nom = nom
@@ -126,7 +123,7 @@ class CaseDeck(Carte):
         else:
             self.scale_pix()
 
-    def scale_pix(self, n: int = 120):
+    def scale_pix(self, n: int = 115):
         if self.nom is None:
             self.setPixmap(QPixmap("Images/case_vide.png").scaled(
                 n, n, Qt.AspectRatioMode.KeepAspectRatio,
@@ -163,13 +160,22 @@ class DeckPanel(QFrame):
                 i += 1
 
     def rajouter(self, nom):
-        for i, carte in self.deck.items():
+        carte = CaseDeck(nom, CARTES[nom])
+        carte.click.connect(self.rajouter)
+        for index, case in self.deck.items():
+            if case is not None and case.nom == nom:
+                self.enlever(index, case)
+                return
+
+        for i, carte_in in self.deck.items():
             i = int(i)
-            if carte is None:
-                carte = CaseDeck(nom, CARTES[nom])
+            if carte_in is None:
                 self.grille.addWidget(carte, i // 4, i % 4)
                 self.deck[str(i)] = carte
                 break
 
-    def enlever(self):
-        pass
+    def enlever(self, index, carte):
+        if carte in self.deck.values():
+            carte.deleteLater()
+            self.grille.removeWidget(carte)
+            self.deck[index] = None
