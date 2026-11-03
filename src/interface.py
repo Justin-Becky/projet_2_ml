@@ -3,15 +3,10 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QWidget, Q
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas as pd
+from config import TABS_NAME, COLONNES_NIVEAUX
+from scroll import scroll_area
+from deck import CreationDeck
 
-# winner_card_0_level ... winner_card_7_level et la même chose pour loser
-COLONNES_NIVEAUX = [
-    f"{joueur}_card_{i}_level"
-    for joueur in ("winner", "loser")
-    for i in range(8)
-]
-
-TABS_NAME = ["Entrainement", "Prédiction"]
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -27,7 +22,7 @@ class MainWindow(QMainWindow):
         self.widget_principal = QWidget()
         self.setCentralWidget(self.widget_principal)
         self.tabs, self.layout_principal = self.setup_layout(self.widget_principal)
-        self.setup_tabs(self.tabs, TABS_NAME)
+        self.tabs_widget = self.setup_tabs(self.tabs, TABS_NAME)
         # </editor-fold>
 
     @staticmethod
@@ -51,15 +46,22 @@ class MainWindow(QMainWindow):
         layout.addWidget(tabs)
 
         layout_graphique = QVBoxLayout()
-        canevas = Canevas()
-        layout_graphique.addWidget(canevas)
+
+        scroll, contenu_layout = scroll_area()
+
+        for _ in range(2):
+            canevas = Canevas()
+            canevas.setMinimumHeight(500)
+            contenu_layout.addWidget(canevas)
+
+        layout_graphique.addWidget(scroll)
         layout.addLayout(layout_graphique)
 
         widget_principal.setLayout(layout)
         return tabs, layout_graphique
 
     @staticmethod
-    def setup_tabs(tab_widget: QTabWidget, tabs_rajouter: list) -> None:
+    def setup_tabs(tab_widget: QTabWidget, tabs_rajouter: list):
         """
         Prend en paramètre tab_widget un QTabWidget et lui rajoute les tabs de la liste tabs_rajouter avec chacun le nom
         comme titre et un QVBoxLayout
@@ -68,9 +70,11 @@ class MainWindow(QMainWindow):
         """
         for tab in tabs_rajouter:
             widget = QWidget()
-            layout = QVBoxLayout()
+            layout = CreationDeck() if tab == "Prédiction" else QVBoxLayout()
             widget.setLayout(layout)
             tab_widget.addTab(widget, tab)
+
+        return tab_widget
 
 
 class Canevas(FigureCanvas):
@@ -112,10 +116,13 @@ class Canevas(FigureCanvas):
         ax.set_title("Niveau moyen : gagnant vs perdant")
         figure.tight_layout()
 
+    def wheelEvent(self, event):
+        # Ignore le wheelEvent pour le laisser au QScrollArea
+        event.ignore()
+
 
 if __name__ == "__main__":
     app = QApplication()
     main_window = MainWindow()
-    main_window.setFixedSize(800, 600)
     main_window.show()
     app.exec()
