@@ -26,7 +26,16 @@ def player_info(player_tag: str) -> tuple:
     return player['name'], round(player_win_rate, 2)
 
 def randomize_players(file):
-    new_column_names = ['Joueur_A', 'Joueur_B', 'Date', 'game_mode', 'Joueur_A_carte_1', 'Joueur_A_carte_2', 'Joueur_A_carte_3', 'Joueur_A_carte_4', 'Joueur_A_carte_5', 'Joueur_A_carte_6', 'Joueur_A_carte_7', 'Joueur_A_carte_8', 'Joueur_B_carte_1', 'Joueur_B_carte_2', 'Joueur_B_carte_3', 'Joueur_B_carte_4', 'Joueur_B_carte_5', 'Joueur_B_carte_6', 'Joueur_B_carte_7', 'Joueur_B_carte_8', 'Joueur_A_niveau_carte_1', 'Joueur_A_niveau_carte_2', 'Joueur_A_niveau_carte_3', 'Joueur_A_niveau_carte_4', 'Joueur_A_niveau_carte_5', 'Joueur_A_niveau_carte_6', 'Joueur_A_niveau_carte_7', 'Joueur_A_niveau_carte_8', 'Joueur_B_niveau_carte_1', 'Joueur_B_niveau_carte_2', 'Joueur_B_niveau_carte_3', 'Joueur_B_niveau_carte_4', 'Joueur_B_niveau_carte_5', 'Joueur_B_niveau_carte_6', 'Joueur_B_niveau_carte_7', 'Joueur_B_niveau_carte_8']
+    new_column_names = ['Joueur_A', 'Joueur_B', 'Date', 'game_mode', 'Joueur_A_carte_1', 'Joueur_A_carte_2',
+                        'Joueur_A_carte_3', 'Joueur_A_carte_4', 'Joueur_A_carte_5', 'Joueur_A_carte_6',
+                        'Joueur_A_carte_7', 'Joueur_A_carte_8', 'Joueur_B_carte_1', 'Joueur_B_carte_2',
+                        'Joueur_B_carte_3', 'Joueur_B_carte_4', 'Joueur_B_carte_5', 'Joueur_B_carte_6',
+                        'Joueur_B_carte_7', 'Joueur_B_carte_8', 'Joueur_A_niveau_carte_1', 'Joueur_A_niveau_carte_2',
+                        'Joueur_A_niveau_carte_3', 'Joueur_A_niveau_carte_4', 'Joueur_A_niveau_carte_5',
+                        'Joueur_A_niveau_carte_6', 'Joueur_A_niveau_carte_7', 'Joueur_A_niveau_carte_8',
+                        'Joueur_B_niveau_carte_1', 'Joueur_B_niveau_carte_2', 'Joueur_B_niveau_carte_3',
+                        'Joueur_B_niveau_carte_4', 'Joueur_B_niveau_carte_5', 'Joueur_B_niveau_carte_6',
+                        'Joueur_B_niveau_carte_7', 'Joueur_B_niveau_carte_8']
 
     pq_df = pd.read_parquet(file)
 
@@ -46,8 +55,16 @@ def randomize_players(file):
             pq_df.at[i, 'Joueur_A_gagne'] = False
             for a, b in zip(player_a_info, player_b_info):
                 pq_df.at[i, a], pq_df.at[i, b] = pq_df.at[i, b], pq_df.at[i, a]
-        pq_df.loc[i, 'Joueur_a_winrate'] = player_info(pq_df.loc[i, 'Joueur_A'])[1]
-        pq_df.loc[i, 'Joueur_b_winrate'] = player_info(pq_df.loc[i, 'Joueur_B'])[1]
+        try:
+            pq_df.loc[i, 'Joueur_A_winrate'] = player_info(pq_df.loc[i, 'Joueur_A'])[1]
+        except:
+            pq_df.loc[i, 'Joueur_A_winrate'] = -1
+        try:
+            pq_df.loc[i, 'Joueur_B_winrate'] = player_info(pq_df.loc[i, 'Joueur_B'])[1]
+        except:
+            pq_df.loc[i, 'Joueur_B_winrate'] = -1
+
+    pq_df.to_parquet(file)
 
     return pq_df
 
@@ -55,4 +72,5 @@ def randomize_players(file):
 
 
 randomize_players('../donnees/2026-06-21_1_copy.parquet')
+
 print(player_info(louis_tag))
