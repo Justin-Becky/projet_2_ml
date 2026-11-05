@@ -2,9 +2,21 @@ import requests
 from variables_secretes import CR_API_KEY
 import pandas as pd
 import random
+import json
 import pyarrow.parquet as pq
 
 louis_tag = '#8LR9RJ99G'
+
+player_cache_file = '../donnees/player_cache.json'
+player_tags = {}
+
+def load_cache(file):
+    with open(file, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def save_cache(file):
+    with open(file, 'w', encoding='utf-8') as f:
+        json.dump(player_tags, f, ensure_ascii=False, indent=2)
 
 def player_info(player_tag: str) -> tuple:
     """
@@ -13,6 +25,9 @@ def player_info(player_tag: str) -> tuple:
     Return:
     player's name and winrate (tuple)
     """
+
+    if player_tag in player_tags:
+        return player_tags[player_tag]
     url = f'https://proxy.royaleapi.dev/v1/players/{player_tag.replace('#', '%23')}'
     r = requests.get(url, headers={"Authorization": f"Bearer {CR_API_KEY}"})
     r.raise_for_status()
@@ -20,8 +35,10 @@ def player_info(player_tag: str) -> tuple:
     player = r.json()
     try:
         player_win_rate = (player['wins']/player['battleCount'])
-    except ValueError('Battle Count invalide: division par 0'):
+    except ZeroDivisionError:
         player_win_rate = 0
+
+    player_tags[player_tag] = (player['name'], round(player_win_rate,2))
 
     return player['name'], round(player_win_rate, 2)
 
@@ -30,9 +47,10 @@ def randomize_players(file):
 
     pq_df = pd.read_parquet(file)
 
+    pq_df = pq_df.head(20)
     pq_df.columns = new_column_names
-    pq_df['Joueur_A_winrate'] = 0
-    pq_df['Joueur_B_winrate'] = 0
+    pq_df['Joueur_A_winrate'] = 0.0
+    pq_df['Joueur_B_winrate'] = 0.0
     pq_df['Joueur_A_gagne'] = True
 
     player_a_info = ['Joueur_A']
@@ -46,13 +64,17 @@ def randomize_players(file):
             pq_df.at[i, 'Joueur_A_gagne'] = False
             for a, b in zip(player_a_info, player_b_info):
                 pq_df.at[i, a], pq_df.at[i, b] = pq_df.at[i, b], pq_df.at[i, a]
-        pq_df.loc[i, 'Joueur_a_winrate'] = player_info(pq_df.loc[i, 'Joueur_A'])[1]
-        pq_df.loc[i, 'Joueur_b_winrate'] = player_info(pq_df.loc[i, 'Joueur_B'])[1]
+        pq_df.loc[i, 'Joueur_A_winrate'] = player_info(pq_df.loc[i, 'Joueur_A'])[1]
+
+        pq_df.loc[i, 'Joueur_B_winrate'] = player_info(pq_df.loc[i, 'Joueur_B'])[1]
+
+    pq_df.to_parquet('../donnees/data_set_final.parquet')
 
     return pq_df
 
 
-
-
-randomize_players('../donnees/2026-06-21_1_copy.parquet')
-print(player_info(louis_tag))
+player_tags = load_cache(player_cache_file)
+try:
+    randomize_players('../donnees/2026-06-21_1_copy.parquet')
+finally:
+    save_cache(player_cache_file)
