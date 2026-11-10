@@ -30,24 +30,36 @@ def player_info(player_tag: str) -> tuple:
         return player_tags[player_tag]
     url = f'https://proxy.royaleapi.dev/v1/players/{player_tag.replace('#', '%23')}'
     r = requests.get(url, headers={"Authorization": f"Bearer {CR_API_KEY}"})
-    r.raise_for_status()
 
-    player = r.json()
-    try:
-        player_win_rate = (player['wins']/player['battleCount'])
-    except ZeroDivisionError:
-        player_win_rate = 0
 
-    player_tags[player_tag] = (player['name'], round(player_win_rate,2))
+    player_win_rate = None
 
-    return player['name'], round(player_win_rate, 2)
+    if r.status_code == 404 or r.status_code == 525 or r.status_code == 520 or r.status_code == 503:
+        player = {
+            'name': 'Player A',
+            'winrate': None
+        }
+
+    else:
+        r.raise_for_status()
+        player = r.json()
+        try:
+            player_win_rate = round((player['wins']/player['battleCount']), 2)
+        except ZeroDivisionError:
+            player_win_rate = 0.
+
+
+    player_tags[player_tag] = (player['name'], player_win_rate)
+
+    return player['name'], player_win_rate
 
 def randomize_players(file):
     new_column_names = ['Joueur_A', 'Joueur_B', 'Date', 'game_mode', 'Joueur_A_carte_1', 'Joueur_A_carte_2', 'Joueur_A_carte_3', 'Joueur_A_carte_4', 'Joueur_A_carte_5', 'Joueur_A_carte_6', 'Joueur_A_carte_7', 'Joueur_A_carte_8', 'Joueur_B_carte_1', 'Joueur_B_carte_2', 'Joueur_B_carte_3', 'Joueur_B_carte_4', 'Joueur_B_carte_5', 'Joueur_B_carte_6', 'Joueur_B_carte_7', 'Joueur_B_carte_8', 'Joueur_A_niveau_carte_1', 'Joueur_A_niveau_carte_2', 'Joueur_A_niveau_carte_3', 'Joueur_A_niveau_carte_4', 'Joueur_A_niveau_carte_5', 'Joueur_A_niveau_carte_6', 'Joueur_A_niveau_carte_7', 'Joueur_A_niveau_carte_8', 'Joueur_B_niveau_carte_1', 'Joueur_B_niveau_carte_2', 'Joueur_B_niveau_carte_3', 'Joueur_B_niveau_carte_4', 'Joueur_B_niveau_carte_5', 'Joueur_B_niveau_carte_6', 'Joueur_B_niveau_carte_7', 'Joueur_B_niveau_carte_8']
 
     pq_df = pd.read_parquet(file)
 
-    pq_df = pq_df.head(20)
+    pq_df = pq_df.head(5000)
+
     pq_df.columns = new_column_names
     pq_df['Joueur_A_winrate'] = 0.0
     pq_df['Joueur_B_winrate'] = 0.0
