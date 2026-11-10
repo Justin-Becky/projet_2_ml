@@ -1,3 +1,4 @@
+
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QWidget, QTabWidget, QVBoxLayout
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas

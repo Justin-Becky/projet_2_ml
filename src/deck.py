@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame
 from PySide6.QtCore import Signal
-from PySide6.QtGui import QPixmap, Qt
+from PySide6.QtGui import QPixmap, Qt, QIcon
 
 from config import CARTES
 from scroll import scroll_area
@@ -22,6 +22,9 @@ class CreationDeck(QVBoxLayout):
         self.addLayout(self.layout_deck)
         self.addWidget(scroll)
 
+        # Pour pouvoir griser les cartes qui sont dans le deck
+        self.cartes = {}
+
         self.deck_panel = self.creer_deck_panel()
         self.creer_cartes()
 
@@ -36,9 +39,10 @@ class CreationDeck(QVBoxLayout):
         for nom, index in CARTES.items():
             j = index % 4
             carte = Carte(nom, index)
+            self.cartes[nom] = carte
             carte.entree.connect(self.survol)
             carte.sortie.connect(self.sortie)
-            carte.click.connect(self.mettre_carte)
+            carte.click.connect(self.deck_panel.rajouter)
             carte_phantom = Carte(nom, index, phantom=True)
             self.contenu_layout.addWidget(carte_phantom, i, j)
             self.contenu_layout.addWidget(carte, i, j)
@@ -47,24 +51,28 @@ class CreationDeck(QVBoxLayout):
                 i += 1
 
     def creer_deck_panel(self):
-        deck_panel = DeckPanel()
+        """
+        Créer le deck panel et le rajout au layout
+
+        Retourne le DeckPanel
+        """
+        deck_panel = DeckPanel(self)
         self.layout_deck.addWidget(deck_panel)
         return deck_panel
 
     @staticmethod
     def survol(carte):
+        """
+        prend en paramètre la Carte qui a été survolé par la souris et la fait grossir.
+        """
         carte.scale_pix(120)
 
     @staticmethod
     def sortie(carte):
+        """
+        prend en paramètre la Carte qui n'est plus survolée par la souris et la fait revenir à sa grosseur de base.
+        """
         carte.scale_pix()
-
-    def mettre_carte(self, nom: str):
-        self.deck_panel.rajouter(nom)
-        # Todo : faire que la carte devienne grise et qu'en re-clickant dessus on puisse l'enlever du deck
-
-    def enlever_carte(self, index: int):
-        pass
 
 
 class Carte(QLabel):
@@ -78,6 +86,8 @@ class Carte(QLabel):
         self.phantom = phantom
         self.nom = nom
         self.index = index
+        self.gris = False
+
         self.scale_pix()
         self.setCursor(Qt.CursorShape.PointingHandCursor)  # petite main au survol
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Centre la carte et son phantom
@@ -87,12 +97,21 @@ class Carte(QLabel):
             self.effet.setOpacity(0.0)
             self.setGraphicsEffect(self.effet)
 
+    def switch_gris(self):
+        if self.gris:
+            pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Disabled)
+            self.setPixmap(pixmap_grise)
+        else:
+            pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
+            self.setPixmap(pixmap_grise)
+
     def scale_pix(self, n: int = 100):
         if self.phantom:
             n = 120
         self.setPixmap(QPixmap(f"Images/cartes_clash_royale/{self.nom}_{self.index}.png").scaled(
             n, n, Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation))
+        self.switch_gris()
 
     def enterEvent(self, event):
         if self.phantom:
@@ -140,8 +159,9 @@ class CaseDeck(Carte):
 
 
 class DeckPanel(QFrame):
-    def __init__(self):
+    def __init__(self, parent: CreationDeck):
         super().__init__()
+        self.parent = parent
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Raised)
         self.setLineWidth(3)
         self.grille = QGridLayout()
@@ -159,6 +179,17 @@ class DeckPanel(QFrame):
             if j == 3:
                 i += 1
 
+    @staticmethod
+    def is_evo_hero(carte):
+        is_evo = False
+        is_hero = False
+        if carte.nom.split(" ")[0] == "evo":
+            is_evo = True
+        elif carte.nom.split(" ")[0] == "hero":
+            is_hero = True
+
+        return is_evo, is_hero
+
     def rajouter(self, nom):
         carte = CaseDeck(nom, CARTES[nom])
         carte.click.connect(self.rajouter)
@@ -167,15 +198,28 @@ class DeckPanel(QFrame):
                 self.enlever(index, case)
                 return
 
+        is_evo, is_hero = self.is_evo_hero(carte)
+
         for i, carte_in in self.deck.items():
             i = int(i)
+            if is_evo and i > 1:
+                break
+            elif is_hero and (i == 0 or i > 2):
+                continue
+
             if carte_in is None:
+                self.parent.cartes[nom].gris = True
+                self.parent.cartes[nom].switch_gris()
                 self.grille.addWidget(carte, i // 4, i % 4)
                 self.deck[str(i)] = carte
                 break
 
     def enlever(self, index, carte):
         if carte in self.deck.values():
+            self.parent.cartes[carte.nom].gris = False
+            self.parent.cartes[carte.nom].switch_gris()
+            self.parent.cartes[carte.nom].scale_pix()
+
             carte.deleteLater()
             self.grille.removeWidget(carte)
             self.deck[index] = None

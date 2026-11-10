@@ -2,6 +2,10 @@ from PySide6.QtWidgets import QScrollArea, QWidget, QVBoxLayout
 from PySide6.QtGui import Qt
 
 def scroll_area(layout=None):
+    """
+
+
+    """
     if layout is None:
         layout = QVBoxLayout()
     # ── ScrollArea ──
