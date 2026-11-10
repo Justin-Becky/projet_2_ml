@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame
+from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame, QTabWidget
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QPixmap, Qt, QIcon
 
@@ -25,8 +25,17 @@ class CreationDeck(QVBoxLayout):
         # Pour pouvoir griser les cartes qui sont dans le deck
         self.cartes = {}
 
-        self.deck_panel = self.creer_deck_panel()
+        self.deck_panel_a, self.deck_panel_b, self.tab_widget = self.creer_deck_panel()
+        self.deck_panel = self.deck_panel_a
+
         self.creer_cartes()
+        self.tab_widget.currentChanged.connect(self.deck_panel_switch)
+
+    def deck_panel_switch(self, index):
+        """
+        Appelée quand on change d'onglet, index est l'onglet sélectionné.
+        """
+        self.deck_panel = self.deck_panel_a if index == 0 else self.deck_panel_b
 
     def creer_cartes(self):
         """
@@ -42,7 +51,7 @@ class CreationDeck(QVBoxLayout):
             self.cartes[nom] = carte
             carte.entree.connect(self.survol)
             carte.sortie.connect(self.sortie)
-            carte.click.connect(self.deck_panel.rajouter)
+            carte.click.connect(self.ajouter_carte)
             carte_phantom = Carte(nom, index, phantom=True)
             self.contenu_layout.addWidget(carte_phantom, i, j)
             self.contenu_layout.addWidget(carte, i, j)
@@ -56,9 +65,13 @@ class CreationDeck(QVBoxLayout):
 
         Retourne le DeckPanel
         """
-        deck_panel = DeckPanel(self)
-        self.layout_deck.addWidget(deck_panel)
-        return deck_panel
+        tab_widget = QTabWidget()
+        deck_panel_a = DeckPanel(self, titre="Joueur A")
+        deck_panel_b = DeckPanel(self, titre="Joueur B")
+        tab_widget.addTab(deck_panel_a, deck_panel_a.titre)
+        tab_widget.addTab(deck_panel_b, deck_panel_b.titre)
+        self.layout_deck.addWidget(tab_widget)
+        return deck_panel_a, deck_panel_b, tab_widget
 
     @staticmethod
     def survol(carte):
@@ -73,6 +86,12 @@ class CreationDeck(QVBoxLayout):
         prend en paramètre la Carte qui n'est plus survolée par la souris et la fait revenir à sa grosseur de base.
         """
         carte.scale_pix()
+
+    def ajouter_carte(self, nom):
+        """
+        Envoie la carte au deck actif au moment du clic.
+        """
+        self.deck_panel.rajouter(nom)
 
 
 class Carte(QLabel):
@@ -159,9 +178,10 @@ class CaseDeck(Carte):
 
 
 class DeckPanel(QFrame):
-    def __init__(self, parent: CreationDeck):
+    def __init__(self, parent: CreationDeck, titre: str):
         super().__init__()
         self.parent = parent
+        self.titre = titre
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Raised)
         self.setLineWidth(3)
         self.grille = QGridLayout()
