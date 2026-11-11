@@ -7,6 +7,7 @@ import pandas as pd
 from config import TABS_NAME, COLONNES_NIVEAUX
 from scroll import scroll_area
 from deck import CreationDeck
+from entraineur import Entraineur
 
 
 class MainWindow(QMainWindow):
@@ -71,7 +72,7 @@ class MainWindow(QMainWindow):
         """
         for tab in tabs_rajouter:
             widget = QWidget()
-            layout = CreationDeck() if tab == "Prédiction" else QVBoxLayout()
+            layout = CreationDeck() if tab == "Prédiction" else Entraineur()
             widget.setLayout(layout)
             tab_widget.addTab(widget, tab)
 
@@ -93,17 +94,17 @@ class Canevas(FigureCanvas):
         """
         # les titres des colonnes qu'on a besoin, soit l'id des gagnants, des perdants et le niveau de chaque carte
         # du gagnant et du perdant.
-        colonnes = ["winner_id", "loser_id"] + COLONNES_NIVEAUX
+        colonnes = ["Joueur_A", "Joueur_B"] + COLONNES_NIVEAUX
 
         # Les dix premières lignes des colonnes voulues
         df = pd.read_parquet(
             "../donnees/2026-06-21_0.parquet", columns=colonnes).head(10)
 
-        colonnes_loser = [f"loser_card_{i}_level" for i in range(8)]
-        colonnes_winner = [f"winner_card_{i}_level" for i in range(8)]
+        colonnes_loser = [f"Joueur_A_niveau_carte_{i}" for i in range(1,9)]
+        colonnes_winner = [f"Joueur_B_niveau_carte_{i}" for i in range(1,9)]
 
         df_graphique = pd.DataFrame({
-            "match": df["winner_id"].astype(str) + "/" + df["loser_id"].astype(str),
+            "match": df["Joueur_A"].astype(str) + "/" + df["Joueur_B"].astype(str),
             "Gagnant": df[colonnes_winner].mean(axis=1),  # calcul la moyenne des cartes du gagnant
             "Perdant": df[colonnes_loser].mean(axis=1),  # calcul la moyenne des cartes du perdant
         })

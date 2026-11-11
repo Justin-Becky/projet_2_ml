@@ -56,9 +56,11 @@ CARTES = {
 
 # winner_card_0_level ... winner_card_7_level et la même chose pour loser
 COLONNES_NIVEAUX = [
-    f"{joueur}_card_{i}_level"
-    for joueur in ("winner", "loser")
-    for i in range(8)
+    f"{joueur}_niveau_carte_{i}"
+    for joueur in ("Joueur_A", "Joueur_B")
+    for i in range(1,9)
 ]
 
 TABS_NAME = ["Entrainement", "Prédiction"]
+
+MODELS = ['Zeus', 'Socrate']
