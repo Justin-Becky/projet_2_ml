@@ -1,3 +1,5 @@
+import os
+
 CARTES = {
     "case_vide": -1, "knight": 0, "archers": 1, "goblins": 2, "giant": 3, "p.e.k.k.a": 4,
     "minions": 5, "balloon": 6, "witch": 7, "barbarians": 8, "golem": 9,
@@ -64,3 +66,10 @@ COLONNES_NIVEAUX = [
 TABS_NAME = ["Entrainement", "Prédiction"]
 
 MODELS = ['Zeus', 'Socrate']
+
+images_folder = '../src/images'
+
+TRAIN_IMAGES = [
+    os.path.join(images_folder, 'Train_head.png'),
+    os.path.join(images_folder, 'Train_body.png'),
+]
