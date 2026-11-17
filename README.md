@@ -40,10 +40,6 @@ Ce projet analyse multiples partie jouées et prédit l’issue d’un match de 
 | `Joueur_A`, `Joueur_B`  | Identifiants de joueurs (données personnelles)        |
 | `time`                  | Horodatage de la partie, non utile pour la prédiction |
 
-Les fichiers sont trop lourd, c'est pourquoi ils ne sont pas dans github. Pour les télécharger, il suffit d'aller 
-sur https://www.kaggle.com/datasets/jackmangione/clash-royale-matchups-june2026/data et de télécharger les six premiers
-fichiers soit (0, 1, 2, 3, 4, 5) et de les mettre dans le dossier donnees.
-
 ## Installation
 
 ```bash
@@ -61,6 +57,9 @@ python src/main.py
 ```
 
 Pour ré-entraîner le modèle (facultatif, le modèle est déjà sauvegardé dans `modeles/`) :
+1. Selectionnez le tab Entrainement
+2. Choisissez votre modèle
+3. Appuez sur TRAIN
 
 ```bash
 python src/modele.py
@@ -93,7 +92,6 @@ projet_inf1007/
 | Modèle              | Métrique (RMSE) | R    |
 |---------------------|-----------------|------|
 | Référence (moyenne) | **              | **** |
-| Forêt aléatoire     | **              | **** |
 
 limites, % trompe, batte les références ?
 
