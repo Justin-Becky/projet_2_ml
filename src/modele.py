@@ -60,7 +60,7 @@ class RegressionLineaire:
 
     def calculer_score(self, x_test, y_test):
         score = self.modele.score(x_test, y_test)
-        return score
+        self.score = score
 
     def save_model(self) -> str:
         os.makedirs(dossier_modeles, exist_ok=True)
@@ -72,8 +72,7 @@ class RegressionLineaire:
     def load(fichier):
         return joblib.load(fichier)
 
-
-# pour toi Louis cadeau pour utiliser la classe
+    # pour toi Louis cadeau pour utiliser la classe
     @staticmethod
     def charger_ou_entrainer(nom, nb_ligne, forcer=False):
         fichier = os.path.join(dossier_modeles, nom + ".joblib")

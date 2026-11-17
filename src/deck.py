@@ -1,8 +1,8 @@
-from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame, QTabWidget, QPushButton, \
-    QHBoxLayout
+from PySide6.QtWidgets import (QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame, QTabWidget,
+                               QPushButton, QHBoxLayout, QWidget)
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QPixmap, Qt, QIcon
-
+from prediction import PanneauPrediction
 from config import CARTES
 from scroll import scroll_area
 
@@ -21,13 +21,14 @@ class CreationDeck(QVBoxLayout):
         scroll, self.contenu_layout = scroll_area(layout=QGridLayout())
         self.layout_deck = QVBoxLayout()
         self.addLayout(self.layout_deck)
+        self.deck_panel_a, self.deck_panel_b, self.tab_widget = self.creer_deck_panel()
+        self.deck_panel = self.deck_panel_a
+        self.panneau_prediction = PanneauPrediction(self.deck_panel_a, self.deck_panel_b)
+        self.layout().addWidget(self.panneau_prediction)
         self.addWidget(scroll)
 
         # Pour pouvoir griser les cartes qui sont dans le deck
         self.cartes = {}
-
-        self.deck_panel_a, self.deck_panel_b, self.tab_widget = self.creer_deck_panel()
-        self.deck_panel = self.deck_panel_a
 
         self.creer_cartes()
         self.tab_widget.currentChanged.connect(self.deck_panel_switch)
@@ -174,6 +175,7 @@ class CaseDeck(Carte):
         self.nom = nom
         self.index = index
         self.niveau = 11
+        self.controle = None
         if setup:
             self.set_up_case_vide()
         else:
@@ -217,30 +219,18 @@ class DeckPanel(QFrame):
             if j == 3:
                 i += 1
 
-    def niveau_carte(self):
-        i = 0
-        for j, carte in self.deck.items():
-            j = int(j) % 4
-            if carte is not None:
-                layout = QHBoxLayout()
-                niv = str(carte.niveau)
-                btn_g = QPushButton("◀")
-                btn_g.setMaximumWidth(10)
-                btn_g.clicked.connect(lambda: (carte.niveau - 1))
-                btn_g.setStyleSheet("background-color: transparent;")
-                btn_d = QPushButton("▶")
-                btn_d.setMaximumWidth(10)
-                btn_d.clicked.connect(lambda: print(carte.niveau + 1))
-                btn_d.setStyleSheet("background-color: transparent;")
-                label = QLabel(niv)
-                layout.addWidget(btn_g)
-                layout.addWidget(label)
-                layout.addWidget(btn_d)
-                layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
-                self.grille.addLayout(layout, i, j)
+    def est_complet(self) -> bool:
+        """Vrai si les 8 cases du deck ont une carte."""
+        return all(carte is not None for carte in self.deck.values())
 
-            if j == 3:
-                i += 1
+    def cartes_et_niveaux(self) -> tuple:
+        """
+        Retourne deux listes de 8 éléments, dans l'ordre des cases.
+        retourne Les index des cartes et leurs niveaux en tuple.
+        """
+        cartes = [carte.index for carte in self.deck.values()]
+        niveaux = [carte.niveau for carte in self.deck.values()]
+        return cartes, niveaux
 
     @staticmethod
     def is_evo_hero(carte):
@@ -275,7 +265,10 @@ class DeckPanel(QFrame):
                 self.parent.cartes[nom].switch_gris()
                 self.grille.addWidget(carte, i // 4, i % 4)
                 self.deck[str(i)] = carte
-                self.niveau_carte()
+
+                carte.controle = ControleNiveau(carte)
+                self.grille.addWidget(carte.controle, i // 4, i % 4,
+                                      Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
                 break
 
     def enlever(self, index, carte):
@@ -283,8 +276,51 @@ class DeckPanel(QFrame):
             self.parent.cartes[carte.nom].gris = False
             self.parent.cartes[carte.nom].switch_gris()
             self.parent.cartes[carte.nom].scale_pix()
-
+            self.grille.removeWidget(carte.controle)
+            carte.controle.deleteLater()
             carte.deleteLater()
             self.grille.removeWidget(carte)
             self.deck[index] = None
 
+
+class ControleNiveau(QWidget):
+    """
+    Les petits boutons ◀ niveau ▶ affichés sous une carte du deck.
+    Ils changent directement carte.niveau, entre NIVEAU_MIN et NIVEAU_MAX.
+    """
+    def __init__(self, carte: CaseDeck):
+        super().__init__()
+        self.carte = carte
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        btn_g = QPushButton("◀")
+        btn_d = QPushButton("▶")
+        for btn in (btn_g, btn_d):
+            btn.setFixedWidth(18)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet("background-color: transparent;")
+        btn_g.clicked.connect(self.baisser)
+        btn_d.clicked.connect(self.monter)
+
+        self.label = QLabel(str(carte.niveau))
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setStyleSheet("background-color: rgba(0, 0, 0, 150); color: white; "
+                                 "font-weight: bold; padding: 0px 4px;")
+
+        layout.addWidget(btn_g)
+        layout.addWidget(self.label)
+        layout.addWidget(btn_d)
+
+    def changer_niveau(self, changement: int):
+        nouveau = self.carte.niveau + changement
+        self.carte.niveau = max(6, min(16, nouveau))
+        self.label.setText(str(self.carte.niveau))
+
+    def baisser(self):
+        self.changer_niveau(-1)
+
+    def monter(self):
+        self.changer_niveau(1)
