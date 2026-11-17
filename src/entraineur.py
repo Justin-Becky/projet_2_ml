@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
 from PySide6.QtCore import Qt, QPropertyAnimation, QPoint
 from PySide6.QtGui import QPixmap, QFont, QPainter
 from config import MODELS, TRAIN_IMAGES
+from modele import RegressionLineaire
 import qt_themes
 
 
@@ -11,7 +12,7 @@ class Entraineur(QVBoxLayout):
     def __init__(self):
         super().__init__()
         qt_themes.set_theme('one_dark_two')
-        self.current_model = None
+        self.current_model: RegressionLineaire = RegressionLineaire('5000 lignes', 5000)
         self.animation = None
         self.train_button = None
 
