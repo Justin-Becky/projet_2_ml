@@ -9,6 +9,16 @@ Ce projet analyse multiples partie jouées et prédit l’issue d’un match de 
 
 ## Jeu de données
 
+Pour analyser des nouvelles données à partir d'un fichier .parquet,
+1. Créer un fichier .py dans .src nommé variables_secretes.py
+2. Dans ce fichier, ajouter une variable nommée CR_API_KEY
+3. Allez sur le site officiel de API Clash Royale https://developer.clashroyale.com/
+4. Faites-vous un 
+5. Appuiez sur My Account
+6. Créez une nouvelle clé avec le nom que vous voulez
+7. Mettez 45.79.218.79 comme IP authorisée, c'est l'IP du proxy utilisée pour acceder votre clé peut importe l'adresse IP
+8. Copier le token et collez la dans votre variable entre des guillemets
+
 | Élément                 | Détail                                                                           |
 |-------------------------|----------------------------------------------------------------------------------|
 | Nom                     | Clash-Royale-Matchups-June2026                                                   |
@@ -73,6 +83,8 @@ projet_inf1007/
 │   ├── interface.py   # interface graphique
 │   ├── deck.py        # interface graphique du deck
 │   ├── entraineur.py  # interface graphique du système d'entrainement
+│   ├── scroll.py      # systeme de défillage pour les graphics
+│   ├── config.py      # constantes utilisées pour l'interface
 │   └── main.py        # point d'entrée
 ├── tests/             # tests pytest
 ├── donnees/           # jeu de données CSV et cache de joueurs JSON
