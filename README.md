@@ -94,15 +94,24 @@ projet_inf1007/
 
 ### Classes principales
 
-CreationDeck
+**CreationDeck**
+
 - Classe utilisée pour gérer l'affichage de l'interface de deck
-Carte
+  
+**Carte**
+  
 - Classe de carte avec son image, son nom, son ID et sa gestion d'affichage
-Entraineur
+  
+**Entraineur**
+  
 - Classe utilisée pour gérer l'interface utilisateur du système d'entrainement
-MainWindow
+  
+**MainWindow**
+
 - Classe utilisée pour gérer le changement d'onglet et les graphics comparatifs
-Modele
+  
+**Modele**
+
 - Un modele comporte un nom, score, temps d'execution, un nombre de lignes analysées ainsi que sa fonction pour s'entrainer
 
 ## Résultats du modèle
