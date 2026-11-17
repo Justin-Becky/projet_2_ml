@@ -61,10 +61,6 @@ Pour ré-entraîner le modèle (facultatif, le modèle est déjà sauvegardé da
 2. Choisissez votre modèle
 3. Appuez sur TRAIN
 
-```bash
-python src/modele.py
-```
-
 ## Structure du code
 
 ```
