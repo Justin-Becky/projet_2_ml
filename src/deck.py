@@ -225,7 +225,6 @@ class DeckPanel(QFrame):
 
     def cartes_et_niveaux(self) -> tuple:
         """
-        Retourne deux listes de 8 éléments, dans l'ordre des cases.
         retourne Les index des cartes et leurs niveaux en tuple.
         """
         cartes = [carte.index for carte in self.deck.values()]
@@ -316,7 +315,7 @@ class ControleNiveau(QWidget):
 
     def changer_niveau(self, changement: int):
         nouveau = self.carte.niveau + changement
-        self.carte.niveau = max(6, min(16, nouveau))
+        self.carte.niveau = max(1, min(16, nouveau))
         self.label.setText(str(self.carte.niveau))
 
     def baisser(self):
