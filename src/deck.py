@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame, QTabWidget
+from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame, QTabWidget, QPushButton, \
+    QHBoxLayout
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QPixmap, Qt, QIcon
 
@@ -34,8 +35,24 @@ class CreationDeck(QVBoxLayout):
     def deck_panel_switch(self, index):
         """
         Appelée quand on change d'onglet, index est l'onglet sélectionné.
+        change le deck du deck_panel pour celui de l'onglet et gère le grise des cartes qui sont dans le deck actif.
         """
         self.deck_panel = self.deck_panel_a if index == 0 else self.deck_panel_b
+        not_deck_panel = self.deck_panel_b if index == 0 else self.deck_panel_a
+
+        for carte in not_deck_panel.deck.values():
+            if carte is not None:
+                carte = self.cartes[carte.nom]
+                carte.gris = False
+                carte.switch_gris()
+                carte.scale_pix()
+
+        for carte in self.deck_panel.deck.values():
+            if carte is not None:
+                carte = self.cartes[carte.nom]
+                carte.gris = True
+                carte.switch_gris()
+                carte.scale_pix()
 
     def creer_cartes(self):
         """
@@ -121,8 +138,8 @@ class Carte(QLabel):
             pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Disabled)
             self.setPixmap(pixmap_grise)
         else:
-            pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
-            self.setPixmap(pixmap_grise)
+            pixmap = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
+            self.setPixmap(pixmap)
 
     def scale_pix(self, n: int = 100):
         if self.phantom:
@@ -156,6 +173,7 @@ class CaseDeck(Carte):
         super().__init__(None, None)
         self.nom = nom
         self.index = index
+        self.niveau = 11
         if setup:
             self.set_up_case_vide()
         else:
@@ -199,6 +217,31 @@ class DeckPanel(QFrame):
             if j == 3:
                 i += 1
 
+    def niveau_carte(self):
+        i = 0
+        for j, carte in self.deck.items():
+            j = int(j) % 4
+            if carte is not None:
+                layout = QHBoxLayout()
+                niv = str(carte.niveau)
+                btn_g = QPushButton("◀")
+                btn_g.setMaximumWidth(10)
+                btn_g.clicked.connect(lambda: (carte.niveau - 1))
+                btn_g.setStyleSheet("background-color: transparent;")
+                btn_d = QPushButton("▶")
+                btn_d.setMaximumWidth(10)
+                btn_d.clicked.connect(lambda: print(carte.niveau + 1))
+                btn_d.setStyleSheet("background-color: transparent;")
+                label = QLabel(niv)
+                layout.addWidget(btn_g)
+                layout.addWidget(label)
+                layout.addWidget(btn_d)
+                layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
+                self.grille.addLayout(layout, i, j)
+
+            if j == 3:
+                i += 1
+
     @staticmethod
     def is_evo_hero(carte):
         is_evo = False
@@ -232,6 +275,7 @@ class DeckPanel(QFrame):
                 self.parent.cartes[nom].switch_gris()
                 self.grille.addWidget(carte, i // 4, i % 4)
                 self.deck[str(i)] = carte
+                self.niveau_carte()
                 break
 
     def enlever(self, index, carte):
@@ -243,3 +287,4 @@ class DeckPanel(QFrame):
             carte.deleteLater()
             self.grille.removeWidget(carte)
             self.deck[index] = None
+
