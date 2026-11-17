@@ -1,3 +1,5 @@
+import os
+
 CARTES = {
     "case_vide": -1, "knight": 0, "archers": 1, "goblins": 2, "giant": 3, "p.e.k.k.a": 4,
     "minions": 5, "balloon": 6, "witch": 7, "barbarians": 8, "golem": 9,
@@ -56,9 +58,18 @@ CARTES = {
 
 # winner_card_0_level ... winner_card_7_level et la même chose pour loser
 COLONNES_NIVEAUX = [
-    f"{joueur}_card_{i}_level"
-    for joueur in ("winner", "loser")
-    for i in range(8)
+    f"{joueur}_niveau_carte_{i}"
+    for joueur in ("Joueur_A", "Joueur_B")
+    for i in range(1,9)
 ]
 
 TABS_NAME = ["Entrainement", "Prédiction"]
+
+MODELS = ['Zeus', 'Socrate']
+
+images_folder = '../src/images'
+
+TRAIN_IMAGES = [
+    os.path.join(images_folder, 'Train_head.png'),
+    os.path.join(images_folder, 'Train_body.png'),
+]
