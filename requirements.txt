@@ -3,3 +3,4 @@ pyarrow == 26.0.0
 pytest
 PySide6
 scikit-learn
+qt-themes
