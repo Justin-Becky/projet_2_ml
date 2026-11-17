@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame, QTabWidget
+from PySide6.QtWidgets import (QVBoxLayout, QGridLayout, QLabel, QGraphicsOpacityEffect, QFrame, QTabWidget,
+                               QPushButton, QHBoxLayout, QWidget)
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QPixmap, Qt, QIcon
-
+from prediction import PanneauPrediction
 from config import CARTES
 from scroll import scroll_area
 
@@ -20,13 +21,14 @@ class CreationDeck(QVBoxLayout):
         scroll, self.contenu_layout = scroll_area(layout=QGridLayout())
         self.layout_deck = QVBoxLayout()
         self.addLayout(self.layout_deck)
+        self.deck_panel_a, self.deck_panel_b, self.tab_widget = self.creer_deck_panel()
+        self.deck_panel = self.deck_panel_a
+        self.panneau_prediction = PanneauPrediction(self.deck_panel_a, self.deck_panel_b)
+        self.layout().addWidget(self.panneau_prediction)
         self.addWidget(scroll)
 
         # Pour pouvoir griser les cartes qui sont dans le deck
         self.cartes = {}
-
-        self.deck_panel_a, self.deck_panel_b, self.tab_widget = self.creer_deck_panel()
-        self.deck_panel = self.deck_panel_a
 
         self.creer_cartes()
         self.tab_widget.currentChanged.connect(self.deck_panel_switch)
@@ -34,8 +36,24 @@ class CreationDeck(QVBoxLayout):
     def deck_panel_switch(self, index):
         """
         Appelée quand on change d'onglet, index est l'onglet sélectionné.
+        change le deck du deck_panel pour celui de l'onglet et gère le grise des cartes qui sont dans le deck actif.
         """
         self.deck_panel = self.deck_panel_a if index == 0 else self.deck_panel_b
+        not_deck_panel = self.deck_panel_b if index == 0 else self.deck_panel_a
+
+        for carte in not_deck_panel.deck.values():
+            if carte is not None:
+                carte = self.cartes[carte.nom]
+                carte.gris = False
+                carte.switch_gris()
+                carte.scale_pix()
+
+        for carte in self.deck_panel.deck.values():
+            if carte is not None:
+                carte = self.cartes[carte.nom]
+                carte.gris = True
+                carte.switch_gris()
+                carte.scale_pix()
 
     def creer_cartes(self):
         """
@@ -121,8 +139,8 @@ class Carte(QLabel):
             pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Disabled)
             self.setPixmap(pixmap_grise)
         else:
-            pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
-            self.setPixmap(pixmap_grise)
+            pixmap = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
+            self.setPixmap(pixmap)
 
     def scale_pix(self, n: int = 100):
         if self.phantom:
@@ -156,6 +174,8 @@ class CaseDeck(Carte):
         super().__init__(None, None)
         self.nom = nom
         self.index = index
+        self.niveau = 11
+        self.controle = None
         if setup:
             self.set_up_case_vide()
         else:
@@ -199,6 +219,18 @@ class DeckPanel(QFrame):
             if j == 3:
                 i += 1
 
+    def est_complet(self) -> bool:
+        """Vrai si les 8 cases du deck ont une carte."""
+        return all(carte is not None for carte in self.deck.values())
+
+    def cartes_et_niveaux(self) -> tuple:
+        """
+        retourne Les index des cartes et leurs niveaux en tuple.
+        """
+        cartes = [carte.index for carte in self.deck.values()]
+        niveaux = [carte.niveau for carte in self.deck.values()]
+        return cartes, niveaux
+
     @staticmethod
     def is_evo_hero(carte):
         is_evo = False
@@ -232,6 +264,10 @@ class DeckPanel(QFrame):
                 self.parent.cartes[nom].switch_gris()
                 self.grille.addWidget(carte, i // 4, i % 4)
                 self.deck[str(i)] = carte
+
+                carte.controle = ControleNiveau(carte)
+                self.grille.addWidget(carte.controle, i // 4, i % 4,
+                                      Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
                 break
 
     def enlever(self, index, carte):
@@ -239,7 +275,51 @@ class DeckPanel(QFrame):
             self.parent.cartes[carte.nom].gris = False
             self.parent.cartes[carte.nom].switch_gris()
             self.parent.cartes[carte.nom].scale_pix()
-
+            self.grille.removeWidget(carte.controle)
+            carte.controle.deleteLater()
             carte.deleteLater()
             self.grille.removeWidget(carte)
             self.deck[index] = None
+
+
+class ControleNiveau(QWidget):
+    """
+    Les petits boutons ◀ niveau ▶ affichés sous une carte du deck.
+    Ils changent directement carte.niveau, entre NIVEAU_MIN et NIVEAU_MAX.
+    """
+    def __init__(self, carte: CaseDeck):
+        super().__init__()
+        self.carte = carte
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        btn_g = QPushButton("◀")
+        btn_d = QPushButton("▶")
+        for btn in (btn_g, btn_d):
+            btn.setFixedWidth(18)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet("background-color: transparent;")
+        btn_g.clicked.connect(self.baisser)
+        btn_d.clicked.connect(self.monter)
+
+        self.label = QLabel(str(carte.niveau))
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setStyleSheet("background-color: rgba(0, 0, 0, 150); color: white; "
+                                 "font-weight: bold; padding: 0px 4px;")
+
+        layout.addWidget(btn_g)
+        layout.addWidget(self.label)
+        layout.addWidget(btn_d)
+
+    def changer_niveau(self, changement: int):
+        nouveau = self.carte.niveau + changement
+        self.carte.niveau = max(1, min(16, nouveau))
+        self.label.setText(str(self.carte.niveau))
+
+    def baisser(self):
+        self.changer_niveau(-1)
+
+    def monter(self):
+        self.changer_niveau(1)

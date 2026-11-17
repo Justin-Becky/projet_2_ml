@@ -22,12 +22,12 @@ class MainWindow(QMainWindow):
         # <editor-fold desc="Layout">
         self.widget_principal = QWidget()
         self.setCentralWidget(self.widget_principal)
-        self.tabs, self.layout_principal = self.setup_layout(self.widget_principal)
+        self.tabs = QTabWidget()
         self.tabs_widget = self.setup_tabs(self.tabs, TABS_NAME)
+        self.layout_principal = self.setup_layout(self.widget_principal)
         # </editor-fold>
 
-    @staticmethod
-    def setup_layout(widget_principal: QWidget = None) -> (QTabWidget, QVBoxLayout):
+    def setup_layout(self, widget_principal: QWidget = None) -> QHBoxLayout | None:
         """
         prend un widget_principal
 
@@ -39,27 +39,21 @@ class MainWindow(QMainWindow):
         Il retourne le QTabWidget et le QVBoxLayout
         """
         if widget_principal is None:
-            return None, None
+            return None
 
         layout = QHBoxLayout()
 
-        tabs = QTabWidget()
-        layout.addWidget(tabs)
-
-        layout_graphique = QVBoxLayout()
-
         scroll, contenu_layout = scroll_area()
+        self.tabs.addTab(scroll, "Comparaison joueur")
 
         for _ in range(2):
             canevas = Canevas()
             canevas.setMinimumHeight(500)
             contenu_layout.addWidget(canevas)
 
-        layout_graphique.addWidget(scroll)
-        layout.addLayout(layout_graphique)
-
+        layout.addWidget(self.tabs)
         widget_principal.setLayout(layout)
-        return tabs, layout_graphique
+        return layout
 
     @staticmethod
     def setup_tabs(tab_widget: QTabWidget, tabs_rajouter: list):
