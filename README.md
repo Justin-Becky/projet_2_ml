@@ -9,6 +9,14 @@ Ce projet analyse multiples partie jouées et prédit l’issue d’un match de 
 
 ## Jeu de données
 
+
+| Élément                 | Détail                                                                           |
+|-------------------------|----------------------------------------------------------------------------------|
+| Nom                     | Clash-Royale-Matchups-June2026                                                   |
+| Source                  | https://www.kaggle.com/datasets/jackmangione/clash-royale-matchups-june2026/data |
+| Licence                 | CC BY-NC-SA 4.0                                                                  |
+| Taille                  | 737 280 lignes, 36 colonnes                                                      |
+
 Pour analyser des nouvelles données à partir d'un fichier .parquet,
 1. Créer un fichier .py dans .src nommé variables_secretes.py
 2. Dans ce fichier, ajouter une variable nommée CR_API_KEY
@@ -18,13 +26,6 @@ Pour analyser des nouvelles données à partir d'un fichier .parquet,
 6. Créez une nouvelle clé avec le nom que vous voulez
 7. Mettez 45.79.218.79 comme IP authorisée, c'est l'IP du proxy utilisée pour acceder votre clé peut importe l'adresse IP
 8. Copier le token et collez la dans votre variable entre des guillemets
-
-| Élément                 | Détail                                                                           |
-|-------------------------|----------------------------------------------------------------------------------|
-| Nom                     | Clash-Royale-Matchups-June2026                                                   |
-| Source                  | https://www.kaggle.com/datasets/jackmangione/clash-royale-matchups-june2026/data |
-| Licence                 | CC BY-NC-SA 4.0                                                                  |
-| Taille                  | 737 280 lignes, 36 colonnes                                                      |
 
 ### Variables catégorielles
 
@@ -93,7 +94,16 @@ projet_inf1007/
 
 ### Classes principales
 
-- *******
+CreationDeck
+- Classe utilisée pour gérer l'affichage de l'interface de deck
+Carte
+- Classe de carte avec son image, son nom, son ID et sa gestion d'affichage
+Entraineur
+- Classe utilisée pour gérer l'interface utilisateur du système d'entrainement
+MainWindow
+- Classe utilisée pour gérer le changement d'onglet et les graphics comparatifs
+Modele
+- Un modele comporte un nom, score, temps d'execution, un nombre de lignes analysées ainsi que sa fonction pour s'entrainer
 
 ## Résultats du modèle
 
