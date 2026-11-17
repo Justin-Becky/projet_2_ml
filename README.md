@@ -5,7 +5,7 @@
 
 ## Description
 
-*************
+Ce projet analyse multiples partie jouées et prédit l’issue d’un match de Clash Royale à partir des données de l’API officielle.
 
 ## Jeu de données
 
@@ -18,24 +18,26 @@
 
 ### Variables catégorielles
 
-| Colonne                           | Description                                 |
-|-----------------------------------|---------------------------------------------|
-| `game_mode`                       | Mode de jeu (ex. `Ladder`)                  |
-| `winner_card_0` à `winner_card_7` | Identifiant des 8 cartes du deck du gagnant |
-| `loser_card_0` à `loser_card_7`   | Identifiant des 8 cartes du deck du perdant |
+| Colonne                                 | Description                                         |
+|-----------------------------------------|-----------------------------------------------------|
+| `game_mode`                             | Mode de jeu (ex. `Ladder`)                          |
+| `Joueur_A_carte_1` à `Joueur_A_carte_8` | Identifiant des 8 cartes du deck du premier joueur  |
+| `Joueur_B_carte_1` à `Joueur_B_carte_8` | Identifiant des 8 cartes du deck du deuxieme joueur |
 
 ### Variables numériques
 
-| Colonne                                       | Description                               |
-|-----------------------------------------------|-------------------------------------------|
-| `winner_card_0_level` à `winner_card_7_level` | Niveau de chacune des 8 cartes du gagnant |
-| `loser_card_0_level` à `loser_card_7_level`   | Niveau de chacune des 8 cartes du perdant |
+| Colonne                                               | Description                                       |
+|-------------------------------------------------------|---------------------------------------------------|
+| `Joueur_A_niveau_carte_1` à `Joueur_A_niveau_carte_8` | Niveau de chacune des 8 cartes du premier joueur  |
+| `Joueur_B_niveau_carte_1` à `Joueur_B_niveau_carte_8` | Niveau de chacune des 8 cartes du deuxieme joueur |
+| `Joueur_A_winrate`, `Joueur_B_winrate`                | Taux de victoires des deux joueurs                |
+| `Joueur_A_gagne`                                      | True si le joueur A gagne, False si il perd       |
 
 ### Colonnes retirées
 
 | Colonne                 | Raison                                                |
 |-------------------------|-------------------------------------------------------|
-| `winner_id`, `loser_id` | Identifiants de joueurs (données personnelles)        |
+| `Joueur_A`, `Joueur_B`  | Identifiants de joueurs (données personnelles)        |
 | `time`                  | Horodatage de la partie, non utile pour la prédiction |
 
 Les fichiers sont trop lourd, c'est pourquoi ils ne sont pas dans github. Pour les télécharger, il suffit d'aller 
@@ -69,13 +71,16 @@ python src/modele.py
 ```
 projet_inf1007/
 ├── src/
+│   ├── images/        # images utilisées pour le projet
 │   ├── donnees.py     # lecture, nettoyage, classes Variable
 │   ├── modele.py      # entraînement, évaluation, prédiction
 │   ├── exceptions.py  # exceptions personnalisées
 │   ├── interface.py   # interface graphique
+│   ├── deck.py        # interface graphique du deck
+│   ├── entraineur.py  # interface graphique du système d'entrainement
 │   └── main.py        # point d'entrée
 ├── tests/             # tests pytest
-├── donnees/           # jeu de données CSV
+├── donnees/           # jeu de données CSV et cache de joueurs JSON
 └── modeles/           # modèle .joblib + métadonnées .json
 ```
 
