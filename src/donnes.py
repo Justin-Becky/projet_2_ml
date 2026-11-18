@@ -134,7 +134,3 @@ def randomize_players(file):
 
 
 player_tags = load_cache(player_cache_file)  # un dict
-try:
-    randomize_players('../donnees/2026-06-21_1.parquet')
-finally:
-    save_cache(player_cache_file)

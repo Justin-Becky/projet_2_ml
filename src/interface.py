@@ -92,10 +92,10 @@ class Canevas(FigureCanvas):
 
         # Les dix premières lignes des colonnes voulues
         df = pd.read_parquet(
-            "../donnees/2026-06-21_0.parquet", columns=colonnes).head(10)
+            "../donnees/data_set_final.parquet", columns=colonnes).head(10)
 
-        colonnes_loser = [f"Joueur_A_niveau_carte_{i}" for i in range(1,9)]
-        colonnes_winner = [f"Joueur_B_niveau_carte_{i}" for i in range(1,9)]
+        colonnes_loser = [f"Joueur_A_niveau_carte_{i}" for i in range(1, 9)]
+        colonnes_winner = [f"Joueur_B_niveau_carte_{i}" for i in range(1, 9)]
 
         df_graphique = pd.DataFrame({
             "match": df["Joueur_A"].astype(str) + "/" + df["Joueur_B"].astype(str),
