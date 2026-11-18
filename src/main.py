@@ -17,7 +17,7 @@ if not os.path.exists(fichier_final):
         raise FileNotFoundError("télécharger les parquets et metter les dans donnees")
 
 for nb_ligne in [5000, 20000, 100000, 200000]:
-    modele = RegressionLineaire.charger_ou_entrainer(f"regression_{nb_ligne}", nb_ligne, forcer=True)
+    modele = RegressionLineaire.charger_ou_entrainer(f"regression_{nb_ligne}", nb_ligne, forcer=False)
 
 app = QApplication()
 main_window = MainWindow()
