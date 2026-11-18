@@ -19,3 +19,4 @@ la date et l'heure
 'winner_card_4_level': UInt8, 'winner_card_5_level': UInt8, 'winner_card_6_level': UInt8, 'winner_card_7_level': UInt8,
 'loser_card_0_level': UInt8, 'loser_card_1_level': UInt8, 'loser_card_2_level': UInt8, 'loser_card_3_level': UInt8, 
 'loser_card_4_level': UInt8, 'loser_card_5_level': UInt8, 'loser_card_6_level': UInt8, 'loser_card_7_level': UInt8
+

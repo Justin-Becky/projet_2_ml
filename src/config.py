@@ -73,3 +73,13 @@ TRAIN_IMAGES = [
     os.path.join(images_folder, 'Train_head.png'),
     os.path.join(images_folder, 'Train_body.png'),
 ]
+
+COLONNES_HISTORIQUE = ["date", "modele", "winrate_a", "winrate_b", "cartes_a", "niveaux_a",
+                       "cartes_b", "niveaux_b", "proba_a", "favori"]
+
+DOSSIER_SRC = os.path.dirname(os.path.abspath(__file__))
+dossier_modeles = os.path.join(DOSSIER_SRC, "..", "modeles")
+FICHIER_FINALE = os.path.join(DOSSIER_SRC, "..", "donnees", "data_set_final.parquet")
+FICHIER_DONNEES = os.path.join(DOSSIER_SRC, "..", "donnees", "2026-06-21_0.parquet")
+player_cache_file = os.path.join(DOSSIER_SRC, "..", "donnees", "player_cache.json")
+FICHIER_HISTORIQUE = os.path.join(DOSSIER_SRC, "..", "donnees", "historique.csv")

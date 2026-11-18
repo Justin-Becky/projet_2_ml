@@ -2,15 +2,14 @@ import os
 from PySide6.QtWidgets import QApplication
 
 from modele import RegressionLineaire
-from donnes import randomize_players, save_cache, player_cache_file, fichier_final
+from donnes import randomize_players, save_cache, player_cache_file
 from interface import MainWindow
+from config import FICHIER_DONNEES, FICHIER_FINALE
 
-FICHIER_BRUT = os.path.join("..", "donnees", "2026-06-21_1.parquet")
-
-if not os.path.exists(fichier_final):
-    if os.path.exists(FICHIER_BRUT):
+if not os.path.exists(FICHIER_FINALE):
+    if os.path.exists(FICHIER_DONNEES):
         try:
-            randomize_players(FICHIER_BRUT)
+            randomize_players(FICHIER_DONNEES)
         finally:
             save_cache(player_cache_file)
     else:

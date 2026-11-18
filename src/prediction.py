@@ -2,9 +2,12 @@ import glob
 import os
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QComboBox, QGridLayout, QLabel, QPushButton, QSpinBox, QWidget
+from PySide6.QtWidgets import QComboBox, QGridLayout, QLabel, QPushButton, QSpinBox, QWidget, QDialog, QVBoxLayout, \
+    QTableWidget, QTableWidgetItem, QHeaderView
 
-from modele import RegressionLineaire, dossier_modeles
+from modele import RegressionLineaire
+from config import dossier_modeles
+from historique import COLONNES_HISTORIQUE, ajouter_prediction, creer_entree, lire_historique
 
 
 class PanneauPrediction(QWidget):
@@ -40,12 +43,19 @@ class PanneauPrediction(QWidget):
         layout.addWidget(self.bouton_predire, 2, 0, 1, 4)
 
         # La quartrième ligne pour les messages d'erreurs et les résultats
+        self.bouton_historique = QPushButton("Voir l'historique")
+        self.bouton_historique.clicked.connect(self.ouvrir_historique)
+        layout.addWidget(self.bouton_historique, 3, 0, 1, 4)
         self.resultat = QLabel("Mets 8 cartes dans chaque deck, puis clique sur Prédire.")
         self.resultat.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.resultat.setWordWrap(True)
         layout.addWidget(self.resultat, 4, 0, 1, 4)
 
         self.remplir_modeles()
+
+    def ouvrir_historique(self):
+        """Ouvre la fenêtre de l'historique des prédictions."""
+        FenetreHistorique(self).exec()
 
     @staticmethod
     def creer_winrate():
@@ -97,3 +107,31 @@ class PanneauPrediction(QWidget):
             f"{favori} favori. A : {proba_a:.0%}, B : {1 - proba_a:.0%} "
             f"(modèle {modele.nom}, précision {modele.score:.1%})"
         )
+
+        entree = creer_entree(modele.nom, self.winrate_a.value() / 100, cartes_a, niveaux_a,
+                              self.winrate_b.value() / 100, cartes_b, niveaux_b, proba_a)
+        ajouter_prediction(entree)
+
+
+class FenetreHistorique(QDialog):
+    """Petite fenêtre qui affiche toutes les prédictions enregistrées dans historique.csv."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Historique des prédictions")
+        self.resize(900, 400)
+
+        layout = QVBoxLayout(self)
+        lignes = lire_historique()
+
+        if not lignes:
+            layout.addWidget(QLabel("Aucune prédiction pour l'instant."))
+            return
+
+        tableau = QTableWidget(len(lignes), len(COLONNES_HISTORIQUE))
+        tableau.setHorizontalHeaderLabels(COLONNES_HISTORIQUE)
+        for i, ligne in enumerate(lignes):
+            for j, colonne in enumerate(COLONNES_HISTORIQUE):
+                tableau.setItem(i, j, QTableWidgetItem(ligne[colonne]))
+        tableau.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        tableau.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        layout.addWidget(tableau)

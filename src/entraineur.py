@@ -50,7 +50,8 @@ class Entraineur(QVBoxLayout):
 
         self.update_stats()
 
-    def create_divider(self):
+    @staticmethod
+    def create_divider():
         divider = QFrame()
         divider.setFrameShape(QFrame.Shape.VLine)
         return divider
@@ -140,7 +141,8 @@ class Entraineur(QVBoxLayout):
         self.train_button.clicked.connect(self.train)
         return self.train_button
 
-    def create_train(self):
+    @staticmethod
+    def create_train():
         n = random.randint(1, 10)
         head = QPixmap(TRAIN_IMAGES[0])
         body = QPixmap(TRAIN_IMAGES[1])

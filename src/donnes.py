@@ -7,10 +7,8 @@ import pandas as pd
 import random
 import json
 import os
+from config import player_cache_file, FICHIER_FINALE
 
-louis_tag = '#8LR9RJ99G'
-fichier_final = '../donnees/data_set_final.parquet'
-player_cache_file = '../donnees/player_cache.json'
 NB_LIGNES = 200000
 TAILLE_LOT = 500
 NB_ESSAIS = 3
@@ -128,7 +126,7 @@ def randomize_players(file):
 
         pq_df.loc[i, 'Joueur_B_winrate'] = player_info(pq_df.loc[i, 'Joueur_B'])[1]
 
-    pq_df.to_parquet('../donnees/data_set_final.parquet')
+    pq_df.to_parquet(FICHIER_FINALE)
 
     return pq_df
 

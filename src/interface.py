@@ -1,10 +1,10 @@
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QWidget, QTabWidget, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QWidget, QTabWidget
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas as pd
-from config import TABS_NAME, COLONNES_NIVEAUX
+from config import TABS_NAME, COLONNES_NIVEAUX, FICHIER_FINALE
 from scroll import scroll_area
 from deck import CreationDeck
 from entraineur import Entraineur
@@ -91,8 +91,7 @@ class Canevas(FigureCanvas):
         colonnes = ["Joueur_A", "Joueur_B"] + COLONNES_NIVEAUX
 
         # Les dix premières lignes des colonnes voulues
-        df = pd.read_parquet(
-            "../donnees/data_set_final.parquet", columns=colonnes).head(10)
+        df = pd.read_parquet(FICHIER_FINALE, columns=colonnes).head(10)
 
         colonnes_loser = [f"Joueur_A_niveau_carte_{i}" for i in range(1, 9)]
         colonnes_winner = [f"Joueur_B_niveau_carte_{i}" for i in range(1, 9)]
