@@ -1,18 +1,28 @@
 import random
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
-                               QComboBox, QPushButton, QFrame)
+                               QComboBox, QPushButton, QFrame, QWidget)
 from PySide6.QtCore import Qt, QPropertyAnimation, QPoint
 from PySide6.QtGui import QPixmap, QFont, QPainter
-from config import MODELS, TRAIN_IMAGES
-from modele import RegressionLineaire
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib import category
+
+import modele
+from donnees import *
+from config import TRAIN_IMAGES
+from modele import RegressionLineaire, lister_modeles, lire_metadonnees
 import qt_themes
 
+MODELS = []
+mod_temp = modele.lister_modeles()
+for mod in mod_temp:
+    MODELS.append(lire_metadonnees(mod))
 
 class Entraineur(QVBoxLayout):
     def __init__(self):
         super().__init__()
         qt_themes.set_theme('one_dark_two')
-        self.current_model: RegressionLineaire = RegressionLineaire('5000 lignes', 5000)
+        self.current_model = MODELS[0]
         self.animation = None
         self.train_button = None
 
@@ -60,7 +70,7 @@ class Entraineur(QVBoxLayout):
         model_layout = QVBoxLayout()
         model_layout.setSpacing(8)
         for model in MODELS:
-            self.model_select.addItem(model)
+            self.model_select.addItem(model['nom'], model)
 
         self.model_select.setFixedSize(200, 60)
         self.model_select.setFont(self.title_font)
@@ -98,10 +108,11 @@ class Entraineur(QVBoxLayout):
         return layout
 
     def update_stats(self):
-        self.name_label.setText(self.model_select.currentText())
-        self.time_label.setText('4')
-        self.line_num_label.setText('5')
-        self.score_label.setText('0')
+        self.current_model = self.model_select.currentData()
+        self.name_label.setText(self.current_model['nom'])
+        self.time_label.setText(str(self.current_model['temps_entrainement']))
+        self.line_num_label.setText(str(self.current_model['nb_lignes']))
+        self.score_label.setText(str(self.current_model['score']))
 
     def create_comparison(self):
         comp_layout = QVBoxLayout()
@@ -113,7 +124,7 @@ class Entraineur(QVBoxLayout):
 
         grid = QGridLayout()
         grid.setSpacing(10)
-        others = [m for m in MODELS if m != self.model_select.currentText()]
+        others = [m for m in MODELS if m != self.model_select.currentData()]
         for i, model in enumerate(others):
             grid.addLayout(self.create_comp_graph(model), i // 2, i % 2)
         comp_layout.addLayout(grid, 1)
@@ -123,12 +134,23 @@ class Entraineur(QVBoxLayout):
         layout = QVBoxLayout()
         layout.setSpacing(4)
 
-        title = QLabel(f'{self.model_select.currentText()} \\ {model}')
+        title = QLabel(f'{self.model_select.currentText()} \\ {model['nom']}')
         title.setFont(self.data_font)
 
-        graph = QLabel('graphic interessant')
-        graph.setFrameShape(QFrame.Shape.Box)
-        graph.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        categories = ['Score', 'Temps d entrainement']
+
+        model_values = {}
+        for mod in MODELS:
+            model_values[mod['nom']] = (mod['score'], mod['temps_entrainement'])
+        fig, ax = plt.subplots(layout='constrained')
+
+        res = ax.grouped_bar(model_values, tick_labels=categories, group_spacing=1)
+
+        ax.legend()
+        graph = FigureCanvasQTAgg(fig)
+#        graph.setFrameShape(QFrame.Shape.Box)
+#        graph.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(title)
         layout.addWidget(graph, 1)
