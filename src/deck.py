@@ -53,7 +53,7 @@ class CarteBase(QLabel, metaclass=MetaCarteAbstraite):
             Qt.TransformationMode.SmoothTransformation))
 
     @abstractmethod
-    def scale_pix(self, n: int = 100) -> None:
+    def scale_pix(self, n: int = 125) -> None:
         """Affiche la carte à la taille n. Chaque classe enfant décide comment."""
 
     def mousePressEvent(self, event):
@@ -97,10 +97,10 @@ class Carte(CarteBase):
             pixmap = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
             self.setPixmap(pixmap)
 
-    def scale_pix(self, n: int = 100):
+    def scale_pix(self, n: int = 125):
         """Redéfinie : taille fixe de 120 pour un phantom, puis applique le gris si besoin."""
         if self.phantom:
-            n = 120
+            n = 140
         self.afficher_image(self.chemin_image(), n)
         self.switch_gris()
 
@@ -138,11 +138,11 @@ class CaseDeck(CarteBase):
         else:
             self.scale_pix()
 
-    def scale_pix(self, n: int = 115):
+    def scale_pix(self, n: int = 160):
         """Redéfinie : simple affichage, sans gris ni phantom."""
         self.afficher_image(self.chemin_image(), n)
 
-    def set_up_case_vide(self, n: int = 120):
+    def set_up_case_vide(self, n: int = 175):
         """Affiche l'image de la case vide, un peu plus grande."""
         self.afficher_image("Images/case_vide.png", n)
 
@@ -239,7 +239,7 @@ class CreationDeck(QVBoxLayout):
         """
         prend en paramètre la Carte qui a été survolé par la souris et la fait grossir.
         """
-        carte.scale_pix(120)
+        carte.scale_pix(140)
 
     @staticmethod
     def sortie(carte):
