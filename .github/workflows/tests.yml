@@ -11,4 +11,4 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: python -m pytest -v
-      - run: coverage report --include="src/*"
+      - run: report --include="src/*"
