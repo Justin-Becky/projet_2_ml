@@ -1,7 +1,7 @@
 import os
 
 CARTES = {
-    "case_vide": -1, "knight": 0, "archers": 1, "goblins": 2, "giant": 3, "p.e.k.k.a": 4,
+    "knight": 0, "archers": 1, "goblins": 2, "giant": 3, "p.e.k.k.a": 4,
     "minions": 5, "balloon": 6, "witch": 7, "barbarians": 8, "golem": 9,
     "skeletons": 10, "valkyrie": 11, "skeleton army": 12, "bomber": 13,
     "musketeer": 14, "baby dragon": 15, "prince": 16, "wizard": 17,

@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QComboBox, QGridLayout, QLabel, QPushButton, QSpin
 from modele import RegressionLineaire
 from config import dossier_modeles
 from historique import COLONNES_HISTORIQUE, ajouter_prediction, creer_entree, lire_historique
+from exceptions import ProjetError
 
 
 class PanneauPrediction(QWidget):
@@ -89,28 +90,33 @@ class PanneauPrediction(QWidget):
         return self.modeles[fichier]
 
     def predire(self):
-        incomplets = [panel.titre for panel in (self.deck_panel_a, self.deck_panel_b) if not panel.est_complet()]
-        if incomplets:
-            self.resultat.setText(f"Deck incomplet : {incomplets}. Il faut 8 cartes dans chaque deck.")
+        """
+        Lit les deux decks et les winrates, demande la probabilité au modèle choisi, affiche le résultat
+        et l'ajoute à l'historique. Affiche un message clair (jamais de plantage) si une saisie est invalide.
+        """
+        try:
+            cartes_a, niveaux_a = self.deck_panel_a.cartes_et_niveaux()
+            cartes_b, niveaux_b = self.deck_panel_b.cartes_et_niveaux()
+            modele = self.modele_choisi()
+            # Les spinbox sont en %, le modèle a été entraîné avec des winrates entre 0 et 1
+            proba_a = modele.predict(self.winrate_a.value() / 100, cartes_a, niveaux_a,
+                                     self.winrate_b.value() / 100, cartes_b, niveaux_b)
+        except ProjetError as erreur:
+            self.resultat.setText(f"Impossible de prédire : {erreur}")
             return
-
-        cartes_a, niveaux_a = self.deck_panel_a.cartes_et_niveaux()
-        cartes_b, niveaux_b = self.deck_panel_b.cartes_et_niveaux()
-        modele = self.modele_choisi()
-
-        # Les spinbox sont en %, le modèle a été entraîné avec des winrates entre 0 et 1, donc on les convertit.
-        proba_a = modele.predict(self.winrate_a.value() / 100, cartes_a, niveaux_a,
-                                 self.winrate_b.value() / 100, cartes_b, niveaux_b)
 
         favori = "Joueur A" if proba_a >= 0.5 else "Joueur B"
         self.resultat.setText(
             f"{favori} favori. A : {proba_a:.0%}, B : {1 - proba_a:.0%} "
-            f"(modèle {modele.nom}, précision {modele.score:.1%})"
+            f"(modèle {modele.nom}, exactitude {modele.score:.1%})"
         )
 
         entree = creer_entree(modele.nom, self.winrate_a.value() / 100, cartes_a, niveaux_a,
                               self.winrate_b.value() / 100, cartes_b, niveaux_b, proba_a)
-        ajouter_prediction(entree)
+        try:
+            ajouter_prediction(entree)
+        except OSError:
+            self.resultat.setText(self.resultat.text() + "\n(Historique non enregistré)")
 
 
 class FenetreHistorique(QDialog):

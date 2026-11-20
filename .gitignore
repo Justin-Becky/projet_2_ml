@@ -1,2 +1,3 @@
 *.parquet
+!donnees/data_set_final.parquet
 /src/variables_secretes.py

@@ -5,6 +5,149 @@ from PySide6.QtGui import QPixmap, Qt, QIcon
 from prediction import PanneauPrediction
 from config import CARTES
 from scroll import scroll_area
+from exceptions import DonneeInvalideError
+from abc import ABCMeta, abstractmethod
+
+
+class MetaCarteAbstraite(ABCMeta, type(QLabel)):
+    """
+    Métaclasse qui combine celle d'ABC et celle de Qt.
+    QLabel a déjà sa propre métaclasse et Python n'en accepte qu'une par classe :
+    sans cette combinaison, une classe ne peut pas hériter à la fois de QLabel et d'ABC.
+    """
+
+
+class CarteBase(QLabel, metaclass=MetaCarteAbstraite):
+    """
+    Classe parente abstraite de toutes les images de cartes : les cartes de la liste (Carte)
+    et les cases du deck (CaseDeck).
+
+    Elle garde le nom et l'index de la carte, sait trouver son image, gère le clic
+    et fournit __str__ et __repr__. Chaque classe enfant doit redéfinir scale_pix,
+    car chacune s'affiche à sa façon (polymorphisme).
+    """
+    # Signal envoyé au clic, avec le nom de la carte
+    click = Signal(str)
+
+    def __init__(self, nom: str | None, index: int | None):
+        # Qt crée l'objet sans passer par la vérification d'ABC : on la refait nous-mêmes
+        if type(self).__abstractmethods__:
+            raise TypeError(f"{type(self).__name__} est abstraite : il faut redéfinir "
+                            f"{', '.join(sorted(type(self).__abstractmethods__))}")
+        super().__init__()
+        self.nom = nom
+        self.index = index
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    def chemin_image(self) -> str:
+        """Renvoie le chemin de l'image de la carte, ou de la case vide si la case n'a pas de carte."""
+        if self.nom is None or self.nom == "case_vide":
+            return "Images/case_vide.png"
+        return f"Images/cartes_clash_royale/{self.nom}_{self.index}.png"
+
+    def afficher_image(self, chemin: str, n: int) -> None:
+        """Affiche l'image du chemin donné, redimensionnée à n pixels au maximum (proportions gardées)."""
+        self.setPixmap(QPixmap(chemin).scaled(
+            n, n, Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation))
+
+    @abstractmethod
+    def scale_pix(self, n: int = 100) -> None:
+        """Affiche la carte à la taille n. Chaque classe enfant décide comment."""
+
+    def mousePressEvent(self, event):
+        """Au clic, envoie le signal click avec le nom de la carte."""
+        self.click.emit(self.nom)
+        super().mousePressEvent(event)
+
+    def __str__(self) -> str:
+        return f"{self.nom} (n° {self.index})"
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(nom={self.nom!r}, index={self.index!r})"
+
+
+class Carte(CarteBase):
+    """
+    Carte de la liste en bas de l'onglet Prédiction : grossit au survol, devient grise quand
+    elle est dans le deck actif. Une carte « phantom » est invisible et sert seulement à réserver la place.
+    """
+    # Les signaux pour prévenir le deck du survol, ils envoient la carte elle-même
+    entree = Signal(QLabel)
+    sortie = Signal(QLabel)
+
+    def __init__(self, nom: str, index: int, phantom: bool = False):
+        super().__init__(nom, index)
+        self.phantom = phantom
+        self.gris = False
+        self.scale_pix()
+
+        if self.phantom:
+            self.effet = QGraphicsOpacityEffect()
+            self.effet.setOpacity(0.0)
+            self.setGraphicsEffect(self.effet)
+
+    def switch_gris(self):
+        """Affiche la carte en gris si self.gris est vrai, en couleur sinon."""
+        if self.gris:
+            pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Disabled)
+            self.setPixmap(pixmap_grise)
+        else:
+            pixmap = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
+            self.setPixmap(pixmap)
+
+    def scale_pix(self, n: int = 100):
+        """Redéfinie : taille fixe de 120 pour un phantom, puis applique le gris si besoin."""
+        if self.phantom:
+            n = 120
+        self.afficher_image(self.chemin_image(), n)
+        self.switch_gris()
+
+    def enterEvent(self, event):
+        if self.phantom:
+            return
+        self.entree.emit(self)
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        if self.phantom:
+            return
+        self.sortie.emit(self)
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        """Un phantom ne réagit pas au clic ; sinon, même comportement que CarteBase."""
+        if self.phantom:
+            return
+        super().mousePressEvent(event)
+
+    def __str__(self) -> str:
+        return super().__str__() + (" (grisée)" if self.gris else "")
+
+
+class CaseDeck(CarteBase):
+    """Une des 8 cases du deck : affiche une carte (ou la case vide) et garde son niveau."""
+
+    def __init__(self, nom: str, index: int, setup: bool = False):
+        super().__init__(nom, index)
+        self.niveau = 11
+        self.controle = None
+        if setup:
+            self.set_up_case_vide()
+        else:
+            self.scale_pix()
+
+    def scale_pix(self, n: int = 115):
+        """Redéfinie : simple affichage, sans gris ni phantom."""
+        self.afficher_image(self.chemin_image(), n)
+
+    def set_up_case_vide(self, n: int = 120):
+        """Affiche l'image de la case vide, un peu plus grande."""
+        self.afficher_image("Images/case_vide.png", n)
+
+    def __str__(self) -> str:
+        return f"{super().__str__()}, niveau {self.niveau}"
 
 
 class CreationDeck(QVBoxLayout):
@@ -112,91 +255,6 @@ class CreationDeck(QVBoxLayout):
         self.deck_panel.rajouter(nom)
 
 
-class Carte(QLabel):
-    # Les signaux pour prévenir le deck, il retourne l'index de la carte
-    entree = Signal(QLabel)
-    sortie = Signal(QLabel)
-    click = Signal(str)
-
-    def __init__(self, nom, index, phantom: bool = False):
-        super().__init__()
-        self.phantom = phantom
-        self.nom = nom
-        self.index = index
-        self.gris = False
-
-        self.scale_pix()
-        self.setCursor(Qt.CursorShape.PointingHandCursor)  # petite main au survol
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Centre la carte et son phantom
-
-        if self.phantom:
-            self.effet = QGraphicsOpacityEffect()
-            self.effet.setOpacity(0.0)
-            self.setGraphicsEffect(self.effet)
-
-    def switch_gris(self):
-        if self.gris:
-            pixmap_grise = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Disabled)
-            self.setPixmap(pixmap_grise)
-        else:
-            pixmap = QIcon(self.pixmap()).pixmap(self.pixmap().size(), QIcon.Mode.Active)
-            self.setPixmap(pixmap)
-
-    def scale_pix(self, n: int = 100):
-        if self.phantom:
-            n = 120
-        self.setPixmap(QPixmap(f"Images/cartes_clash_royale/{self.nom}_{self.index}.png").scaled(
-            n, n, Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation))
-        self.switch_gris()
-
-    def enterEvent(self, event):
-        if self.phantom:
-            return
-        self.entree.emit(self)
-        super().enterEvent(event)
-
-    def leaveEvent(self, event):
-        if self.phantom:
-            return
-        self.sortie.emit(self)
-        super().leaveEvent(event)
-
-    def mousePressEvent(self, event):
-        if self.phantom:
-            return
-        self.click.emit(self.nom)
-        super().mousePressEvent(event)
-
-
-class CaseDeck(Carte):
-    def __init__(self, nom, index, setup: bool = False):
-        super().__init__(None, None)
-        self.nom = nom
-        self.index = index
-        self.niveau = 11
-        self.controle = None
-        if setup:
-            self.set_up_case_vide()
-        else:
-            self.scale_pix()
-
-    def scale_pix(self, n: int = 115):
-        if self.nom is None:
-            self.setPixmap(QPixmap("Images/case_vide.png").scaled(
-                n, n, Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation))
-        else:
-            self.setPixmap(QPixmap(f"Images/cartes_clash_royale/{self.nom}_{self.index}.png").scaled(
-                n, n, Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation))
-
-    def set_up_case_vide(self, n: int = 120):
-        self.setPixmap(QPixmap("Images/case_vide.png").scaled(
-            n, n, Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation))
-
-
 class DeckPanel(QFrame):
     def __init__(self, parent: CreationDeck, titre: str):
         super().__init__()
@@ -227,6 +285,8 @@ class DeckPanel(QFrame):
         """
         retourne Les index des cartes et leurs niveaux en tuple.
         """
+        if not self.est_complet():
+            raise DonneeInvalideError(f"{self.titre} : il faut 8 cartes dans le deck.")
         cartes = [carte.index for carte in self.deck.values()]
         niveaux = [carte.niveau for carte in self.deck.values()]
         return cartes, niveaux

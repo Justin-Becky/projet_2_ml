@@ -9,8 +9,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from config import FICHIER_FINALE, dossier_modeles
+from exceptions import DonneeInvalideError, ModeleIntrouvableError
 
-CARTES_A = [f'Joueur_A_carte_{i}' for i in range(1,  9)]
+CARTES_A = [f'Joueur_A_carte_{i}' for i in range(1, 9)]
 CARTES_B = [f'Joueur_B_carte_{i}' for i in range(1, 9)]
 NIVEAUX_A = [f'Joueur_A_niveau_carte_{i}' for i in range(1, 9)]
 NIVEAUX_B = [f'Joueur_B_niveau_carte_{i}' for i in range(1, 9)]
@@ -29,8 +30,14 @@ class RegressionLineaire:
         self.colonnes = []
         self.cartes_connues = []
 
-    def train(self):
-        df = pd.read_parquet(FICHIER_FINALE)
+    def __str__(self) -> str:
+        return f"{self.nom} : {self.score:.1%} de bonnes prédictions ({self.nb_ligne} lignes)"
+
+    def __repr__(self) -> str:
+        return f"RegressionLineaire(nom={self.nom!r}, nb_igne={self.nb_ligne})"
+
+    def train(self, fichier: str = FICHIER_FINALE):
+        df = pd.read_parquet(fichier)
         df = df.dropna()
         df = df.head(self.nb_ligne)
         y = df["Joueur_A_gagne"]
@@ -50,7 +57,28 @@ class RegressionLineaire:
         self.running_time = time.perf_counter() - debut
         self.calculer_score(x_test, y_test)
 
+    def valider_joueur(self, winrate: float, cartes: list[int], niveaux: list[int]) -> None:
+        """
+        Vérifie les données d'un joueur avant une prédiction. Ne renvoie rien si tout est valide.
+
+        Lève DonneeInvalideError si le winrate n'est pas entre 0 et 1, s'il n'y a pas 8 cartes et 8 niveaux,
+        si un niveau n'est pas entre 1 et 16 ou si une carte n'apparaît pas dans les données d'entraînement.
+        """
+        if not 0 <= winrate <= 1:
+            raise DonneeInvalideError(f"Le winrate doit être entre 0 et 100 %, reçu {winrate:.0%}.")
+        if len(cartes) != 8 or len(niveaux) != 8:
+            raise DonneeInvalideError("Il faut exactement 8 cartes et 8 niveaux par joueur.")
+        for niveau in niveaux:
+            if not 1 <= niveau <= 16:
+                raise DonneeInvalideError(f"Le niveau d'une carte doit être entre 1 et 16, reçu {niveau}.")
+        inconnues = set(cartes) - set(self.cartes_connues)
+        if inconnues:
+            raise DonneeInvalideError(f"Carte(s) absente(s) des données d'entraînement : {sorted(inconnues)}. "
+                                      "Le modèle ne peut pas en tenir compte.")
+
     def predict(self, winrate_a, cartes_a, niveaux_a, winrate_b, cartes_b, niveaux_b) -> float:
+        self.valider_joueur(winrate_a, cartes_a, niveaux_a)
+        self.valider_joueur(winrate_b, cartes_b, niveaux_b)
         partie = {'Joueur_A_winrate': winrate_a, 'Joueur_B_winrate': winrate_b}
         for i in range(8):
             partie[CARTES_A[i]] = cartes_a[i]
@@ -93,6 +121,9 @@ class RegressionLineaire:
 
     @staticmethod
     def load(fichier):
+        if not os.path.exists(fichier):
+            raise ModeleIntrouvableError(f"Modèle introuvable : {os.path.basename(fichier)}. "
+                                         "Entraîne-le dans l'onglet Entraînement.")
         return joblib.load(fichier)
 
     # pour toi Louis cadeau pour utiliser la classe
