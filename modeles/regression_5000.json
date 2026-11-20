@@ -227,6 +227,16 @@
       1.0
     ]
   },
-  "score": 0.67,
-  "temps_entrainement": 0.20877919998019934
+  "score": 0.653,
+  "temps_entrainement": 0.1176180001348257,
+  "matrice_confusion": [
+    [
+      334,
+      193
+    ],
+    [
+      154,
+      319
+    ]
+  ]
 }

@@ -65,8 +65,6 @@ COLONNES_NIVEAUX = [
 
 TABS_NAME = ["Entrainement", "Prédiction"]
 
-MODELS = ['Zeus', 'Socrate']
-
 images_folder = '../src/images'
 
 TRAIN_IMAGES = [
@@ -80,6 +78,6 @@ COLONNES_HISTORIQUE = ["date", "modele", "winrate_a", "winrate_b", "cartes_a", "
 DOSSIER_SRC = os.path.dirname(os.path.abspath(__file__))
 dossier_modeles = os.path.join(DOSSIER_SRC, "..", "modeles")
 FICHIER_FINALE = os.path.join(DOSSIER_SRC, "..", "donnees", "data_set_final.parquet")
-FICHIER_DONNEES = os.path.join(DOSSIER_SRC, "..", "donnees", "2026-06-21_0.parquet")
+FICHIER_DONNEES = os.path.join(DOSSIER_SRC, "..", "donnees", "2026-06-21_1.parquet")
 player_cache_file = os.path.join(DOSSIER_SRC, "..", "donnees", "player_cache.json")
 FICHIER_HISTORIQUE = os.path.join(DOSSIER_SRC, "..", "donnees", "historique.csv")
