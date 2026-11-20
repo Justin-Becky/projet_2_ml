@@ -63,7 +63,7 @@ COLONNES_NIVEAUX = [
     for i in range(1,9)
 ]
 
-TABS_NAME = ["Entrainement", "Prédictio"]
+TABS_NAME = ["Entrainement", "Prédiction"]
 
 images_folder = '../src/images'
 

@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from config import FICHIER_FINALE, dossier_modeles
+from sklearn.metrics import confusion_matrix
 
 CARTES_A = [f'Joueur_A_carte_{i}' for i in range(1,  9)]
 CARTES_B = [f'Joueur_B_carte_{i}' for i in range(1, 9)]
@@ -28,6 +29,7 @@ class RegressionLineaire:
         )
         self.colonnes = []
         self.cartes_connues = []
+        self.matrice_confusion = [[0, 0], [0, 0]]
 
     def train(self):
         df = pd.read_parquet(FICHIER_FINALE)
@@ -65,6 +67,10 @@ class RegressionLineaire:
         score = self.modele.score(x_test, y_test)
         self.score = score
 
+        y_predit = self.modele.predict(x_test)
+        # labels=[False, True] fixe l'ordre : ligne et colonne 0 = B gagne, ligne et colonne 1 = A gagne
+        self.matrice_confusion = confusion_matrix(y_test, y_predit, labels=[False, True]).tolist()
+
     def metadonnees(self) -> dict:
         """
         Renvoie les métadonnées du modèle dans un dict prêt à être écrit en JSON :
@@ -78,6 +84,7 @@ class RegressionLineaire:
             "numeriques": {"niveau": [1, 16], "winrate": [0.0, 1.0]},
             "score": float(self.score),
             "temps_entrainement": self.running_time,
+            "matrice_confusion": self.matrice_confusion,
         }
 
     def save_model(self):

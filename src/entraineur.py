@@ -1,11 +1,13 @@
 import random
+import numpy as np
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                                QComboBox, QPushButton, QFrame, QWidget)
-from PySide6.QtCore import Qt, QPropertyAnimation, QPoint
+from PySide6.QtCore import Qt, QPropertyAnimation, QPoint, QThread, Signal
+from PySide6.QtWidgets import QMessageBox
 from PySide6.QtGui import QPixmap, QFont, QPainter
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-from matplotlib import category
 
 import modele
 from donnees import *
@@ -18,11 +20,28 @@ mod_temp = modele.lister_modeles()
 for mod in mod_temp:
     MODELS.append(lire_metadonnees(mod))
 
+class TrainWorker(QThread):
+    termine = Signal(str)
+    echec = Signal(str)
+
+    def __init__(self, nom, nb_lignes):
+        super().__init__()
+        self.nom = nom
+        self.nb_lignes = nb_lignes
+
+    def run(self):
+        try:
+            RegressionLineaire.charger_ou_entrainer(self.nom, self.nb_lignes, forcer=True)
+            self.termine.emit(self.nom)
+        except Exception as e:
+            self.echec.emit(str(e))
+
 class Entraineur(QVBoxLayout):
     def __init__(self):
         super().__init__()
         qt_themes.set_theme('one_dark_two')
         self.current_model = MODELS[0]
+        self.worker = None
         self.animation = None
         self.train_button = None
 
@@ -110,9 +129,10 @@ class Entraineur(QVBoxLayout):
     def update_stats(self):
         self.current_model = self.model_select.currentData()
         self.name_label.setText(self.current_model['nom'])
-        self.time_label.setText(str(self.current_model['temps_entrainement']))
+        self.time_label.setText(str(round(self.current_model['temps_entrainement'], 2)))
         self.line_num_label.setText(str(self.current_model['nb_lignes']))
         self.score_label.setText(str(self.current_model['score']))
+        self.update_confusion()
 
     def create_comparison(self):
         comp_layout = QVBoxLayout()
@@ -122,21 +142,19 @@ class Entraineur(QVBoxLayout):
         comp_title.setFont(self.title_font)
         comp_layout.addWidget(comp_title)
 
-        grid = QGridLayout()
+        grid = QVBoxLayout()
         grid.setSpacing(10)
-        others = [m for m in MODELS if m != self.model_select.currentData()]
-        for i, model in enumerate(others):
-            grid.addLayout(self.create_comp_graph(model), i // 2, i % 2)
+        grid.addLayout(self.create_comp_graph())
+        grid.addLayout(self.matrice_de_confusion())
         comp_layout.addLayout(grid, 1)
         return comp_layout
 
-    def create_comp_graph(self, model):
+    def create_comp_graph(self):
         layout = QVBoxLayout()
         layout.setSpacing(4)
 
-        title = QLabel(f'{self.model_select.currentText()} \\ {model['nom']}')
+        title = QLabel(f'Comparaison des diférents modèles entraînés')
         title.setFont(self.data_font)
-
 
         categories = ['Score', 'Temps d entrainement']
 
@@ -149,12 +167,51 @@ class Entraineur(QVBoxLayout):
 
         ax.legend()
         graph = FigureCanvasQTAgg(fig)
-#        graph.setFrameShape(QFrame.Shape.Box)
-#        graph.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(title)
         layout.addWidget(graph, 1)
         return layout
+
+    def matrice_de_confusion(self):
+        layout = QVBoxLayout()
+        layout.setSpacing(4)
+
+        title = QLabel('Matrice de confusion du modèle sélectionné')
+        title.setFont(self.data_font)
+
+        self.cm_fig = Figure(layout='constrained')
+        self.cm_ax = self.cm_fig.add_subplot()
+        self.cm_canvas = FigureCanvasQTAgg(self.cm_fig)
+
+        layout.addWidget(title)
+        layout.addWidget(self.cm_canvas, 1)
+        return layout
+
+    def update_confusion(self):
+        ax = self.cm_ax
+        ax.clear()
+
+        matrice = self.current_model.get('matrice_confusion')
+        if matrice is None:
+            ax.set_axis_off()
+            ax.text(0.5, 0.5, 'Matrice indisponible\n(réentraîne le modèle)',
+                    ha='center', va='center', transform=ax.transAxes)
+        else:
+            ax.set_axis_on()
+            m = np.array(matrice)
+            ax.imshow(m, cmap='Blues')
+            ax.set_xticks([0, 1], labels=['B gagne', 'A gagne'])
+            ax.set_yticks([0, 1], labels=['B gagne', 'A gagne'])
+            ax.set_xlabel('Prédit')
+            ax.set_ylabel('Réel')
+
+            seuil = m.max() / 2
+            for i in range(2):
+                for j in range(2):
+                    ax.text(j, i, str(m[i, j]), ha='center', va='center', fontsize=16,
+                            color='white' if m[i, j] > seuil else 'black')
+
+        self.cm_canvas.draw_idle()
 
     def create_train_button(self):
         self.train_button = QPushButton('TRAIN')
@@ -181,9 +238,24 @@ class Entraineur(QVBoxLayout):
         painter.drawPixmap(n * body.width(), 0, head)
         painter.end()
 
+
+
         return train
 
     def train(self):
+        if self.worker and self.worker.isRunning():
+            return
+
+        self.animer_train()
+        self.train_button.setEnabled(False)
+
+        self.worker = TrainWorker(self.current_model['nom'], self.current_model['nb_lignes'])
+        self.worker.termine.connect(self.on_train_termine)
+        self.worker.echec.connect(self.on_train_echec)
+        self.worker.start()
+
+
+    def animer_train(self):
         if self.animation and self.animation.state() == QPropertyAnimation.State.Running:
             return
 
@@ -205,3 +277,21 @@ class Entraineur(QVBoxLayout):
         self.animation.setEndValue(QPoint(button.width(), y))
         self.animation.finished.connect(train_label.deleteLater)
         self.animation.start()
+
+    def on_train_termine(self, nom):
+        meta = lire_metadonnees(nom)
+
+        i = self.model_select.findText(nom)
+        MODELS[i] = meta
+        self.model_select.setItemData(i, meta)
+
+        if self.model_select.currentIndex() == i:
+            self.update_stats()  # met aussi à jour la matrice
+        else:
+            self.model_select.setCurrentIndex(i)
+
+        self.train_button.setEnabled(True)
+
+    def on_train_echec(self, message):
+        self.train_button.setEnabled(True)
+        QMessageBox.critical(self.train_button, 'Erreur d\'entraînement', message)
