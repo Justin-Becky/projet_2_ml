@@ -1,5 +1,5 @@
 
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, Qt
 from PySide6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QWidget, QTabWidget
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -68,7 +68,16 @@ class MainWindow(QMainWindow):
             widget = QWidget()
             layout = CreationDeck() if tab == "Prédiction" else Entraineur()
             widget.setLayout(layout)
-            tab_widget.addTab(widget, tab)
+
+            if tab == "Prédiction":
+                widget.setMaximumSize(600, 1000)
+                # La page de l'onglet est un conteneur qui centre le widget horizontalement
+                page = QWidget()
+                layout_page = QHBoxLayout(page)
+                layout_page.addWidget(widget, alignment=Qt.AlignmentFlag.AlignHCenter)
+                tab_widget.addTab(page, tab)
+            else:
+                tab_widget.addTab(widget, tab)
 
         return tab_widget
 

@@ -1,7 +1,6 @@
 import random
 import numpy as np
-from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
-                               QComboBox, QPushButton, QFrame, QWidget)
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFrame
 from PySide6.QtCore import Qt, QPropertyAnimation, QPoint, QThread, Signal
 from PySide6.QtWidgets import QMessageBox
 from PySide6.QtGui import QPixmap, QFont, QPainter
@@ -10,9 +9,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 import modele
-from donnees import *
 from config import TRAIN_IMAGES
-from modele import RegressionLineaire, lister_modeles, lire_metadonnees
+from modele import RegressionLineaire, lire_metadonnees
 import qt_themes
 
 MODELS = []
@@ -39,6 +37,9 @@ class TrainWorker(QThread):
 class Entraineur(QVBoxLayout):
     def __init__(self):
         super().__init__()
+        self.cm_canvas = None
+        self.cm_ax = None
+        self.cm_fig = None
         qt_themes.set_theme('one_dark_two')
         self.current_model = MODELS[0]
         self.worker = None
@@ -131,7 +132,7 @@ class Entraineur(QVBoxLayout):
         self.name_label.setText(self.current_model['nom'])
         self.time_label.setText(str(round(self.current_model['temps_entrainement'], 2)))
         self.line_num_label.setText(str(self.current_model['nb_lignes']))
-        self.score_label.setText(str(self.current_model['score']))
+        self.score_label.setText(str(round(self.current_model['score'] * 100, 2)) + " %")
         self.update_confusion()
 
     def create_comparison(self):
@@ -159,8 +160,8 @@ class Entraineur(QVBoxLayout):
         categories = ['Score', 'Temps d entrainement']
 
         model_values = {}
-        for mod in MODELS:
-            model_values[mod['nom']] = (mod['score'], mod['temps_entrainement'])
+        for model in MODELS:
+            model_values[model['nom']] = (model['score'], model['temps_entrainement'])
         fig, ax = plt.subplots(layout='constrained')
 
         res = ax.grouped_bar(model_values, tick_labels=categories, group_spacing=1)
@@ -238,8 +239,6 @@ class Entraineur(QVBoxLayout):
         painter.drawPixmap(n * body.width(), 0, head)
         painter.end()
 
-
-
         return train
 
     def train(self):
@@ -253,7 +252,6 @@ class Entraineur(QVBoxLayout):
         self.worker.termine.connect(self.on_train_termine)
         self.worker.echec.connect(self.on_train_echec)
         self.worker.start()
-
 
     def animer_train(self):
         if self.animation and self.animation.state() == QPropertyAnimation.State.Running:

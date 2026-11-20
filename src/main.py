@@ -20,6 +20,6 @@ for nb_ligne in [5000, 20000, 100000, 200000]:
 
 app = QApplication()
 main_window = MainWindow()
-main_window.show()
+main_window.showMaximized()
 app.exec()
 
